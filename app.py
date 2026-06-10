@@ -402,6 +402,11 @@ def new_bet():
         return redirect(url_for('dashboard'))
 
     db = get_db()
+    if user_balance(session['user_id']) < stake:
+        db.rollback()
+        flash('Insufficient balance. You cannot stake more than your available funds.', 'danger')
+        return redirect(url_for('dashboard'))
+
     db.execute(
         'INSERT INTO bets (user_id, match_info, round, stake, odds, pick) '
         f'VALUES ({p()}, {p()}, {p()}, {p()}, {p()}, {p()})',
@@ -431,6 +436,10 @@ def settle_bet(bet_id):
         flash('Bet not found.', 'danger')
         return redirect(url_for('dashboard'))
 
+    if bet['result'] != 'pending':
+        flash('This bet has already been settled.', 'danger')
+        return redirect(url_for('dashboard'))
+
     db.execute(
         f'UPDATE bets SET result = {p()}, settled_at = {now()} WHERE id = {p()}',
         (result, bet_id)
@@ -452,6 +461,10 @@ def delete_bet(bet_id):
 
     if not bet:
         flash('Bet not found.', 'danger')
+        return redirect(url_for('dashboard'))
+
+    if bet['result'] != 'pending':
+        flash('Cannot delete a settled bet.', 'danger')
         return redirect(url_for('dashboard'))
 
     db.execute(
