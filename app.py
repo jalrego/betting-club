@@ -19,54 +19,100 @@ app.secret_key = os.environ.get('SECRET_KEY', 'change-this-to-a-random-secret')
 app.config['UPLOAD_FOLDER'] = os.path.join(app.static_folder, 'uploads')
 app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+DATABASE_URL = os.environ.get('DATABASE_URL', '')
 DATABASE = os.path.join(app.root_path, 'betting.db')
 
 STARTING_BALANCE = 1000  # €10.00 in cents
 
 
 def get_db():
-    if 'db' not in g:
+    if 'db' in g:
+        return g.db
+
+    if DATABASE_URL:
+        import psycopg2
+        from psycopg2.extras import RealDictCursor
+        g.db = psycopg2.connect(DATABASE_URL, sslmode='require')
+        g.db.autocommit = False
+    else:
         g.db = sqlite3.connect(DATABASE)
         g.db.row_factory = sqlite3.Row
+
     return g.db
+
+
+def is_pg():
+    return bool(DATABASE_URL)
+
+
+def p():
+    return '%s' if is_pg() else '?'
+
+
+def now():
+    return 'NOW()' if is_pg() else "datetime('now')"
 
 
 def close_db(e=None):
     db = g.pop('db', None)
     if db is not None:
+        if e and is_pg():
+            try:
+                db.rollback()
+            except Exception:
+                pass
         db.close()
 
 
 def init_db():
     db = get_db()
     try:
-        db.executescript("""
-            CREATE TABLE IF NOT EXISTS users (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                username TEXT UNIQUE NOT NULL,
-                password_hash TEXT NOT NULL,
-                created_at TEXT NOT NULL DEFAULT (datetime('now'))
-            );
-            CREATE TABLE IF NOT EXISTS balance_records (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id INTEGER NOT NULL,
-                balance INTEGER NOT NULL,
-                screenshot TEXT,
-                notes TEXT,
-                created_at TEXT NOT NULL DEFAULT (datetime('now')),
-                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-            );
-            CREATE INDEX IF NOT EXISTS idx_balance_user ON balance_records(user_id);
-            CREATE INDEX IF NOT EXISTS idx_balance_created ON balance_records(created_at);
-        """)
+        if is_pg():
+            db.execute("""
+                CREATE TABLE IF NOT EXISTS users (
+                    id SERIAL PRIMARY KEY,
+                    username TEXT UNIQUE NOT NULL,
+                    password_hash TEXT NOT NULL,
+                    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+                )
+            """)
+            db.execute("""
+                CREATE TABLE IF NOT EXISTS balance_records (
+                    id SERIAL PRIMARY KEY,
+                    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                    balance INTEGER NOT NULL,
+                    screenshot TEXT,
+                    notes TEXT,
+                    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+                )
+            """)
+            db.execute("""
+                CREATE INDEX IF NOT EXISTS idx_balance_user ON balance_records(user_id)
+            """)
+            db.execute("""
+                CREATE INDEX IF NOT EXISTS idx_balance_created ON balance_records(created_at)
+            """)
+        else:
+            db.executescript("""
+                CREATE TABLE IF NOT EXISTS users (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    username TEXT UNIQUE NOT NULL,
+                    password_hash TEXT NOT NULL,
+                    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+                );
+                CREATE TABLE IF NOT EXISTS balance_records (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER NOT NULL,
+                    balance INTEGER NOT NULL,
+                    screenshot TEXT,
+                    notes TEXT,
+                    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+                );
+                CREATE INDEX IF NOT EXISTS idx_balance_user ON balance_records(user_id);
+                CREATE INDEX IF NOT EXISTS idx_balance_created ON balance_records(created_at);
+            """)
         db.commit()
-
-        col_type = db.execute("PRAGMA table_info(balance_records)").fetchall()
-        for col in col_type:
-            if col[1] == 'balance' and col[2].upper() == 'REAL':
-                db.execute("UPDATE balance_records SET balance = CAST(balance * 100 AS INTEGER)")
-                db.commit()
-                break
     except Exception as e:
         logging.error(f"init_db failed: {e}")
         raise
@@ -122,7 +168,7 @@ def register():
 
         db = get_db()
         existing = db.execute(
-            'SELECT id FROM users WHERE username = ?', (username,)
+            f'SELECT id FROM users WHERE username = {p()}', (username,)
         ).fetchone()
         if existing:
             flash('Username already taken.', 'danger')
@@ -130,7 +176,7 @@ def register():
 
         pw_hash = generate_password_hash(password, method='pbkdf2:sha256')
         db.execute(
-            'INSERT INTO users (username, password_hash) VALUES (?, ?)',
+            f'INSERT INTO users (username, password_hash) VALUES ({p()}, {p()})',
             (username, pw_hash)
         )
         db.commit()
@@ -149,7 +195,7 @@ def login():
 
         db = get_db()
         user = db.execute(
-            'SELECT * FROM users WHERE username = ?', (username,)
+            f'SELECT * FROM users WHERE username = {p()}', (username,)
         ).fetchone()
 
         if user and check_password_hash(user['password_hash'], password):
@@ -178,7 +224,7 @@ def dashboard():
 
     try:
         rows = db.execute(
-            'SELECT * FROM balance_records WHERE user_id = ? ORDER BY created_at DESC',
+            f'SELECT * FROM balance_records WHERE user_id = {p()} ORDER BY created_at DESC',
             (user_id,)
         ).fetchall()
 
@@ -230,7 +276,7 @@ def upload():
     db = get_db()
     db.execute(
         'INSERT INTO balance_records (user_id, balance, screenshot, notes) '
-        'VALUES (?, ?, ?, ?)',
+        f'VALUES ({p()}, {p()}, {p()}, {p()})',
         (session['user_id'], balance, filename, notes)
     )
     db.commit()
