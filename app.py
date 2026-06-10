@@ -544,6 +544,32 @@ def user_profile(user_id):
                            starting=STARTING_BALANCE / 100.0)
 
 
+@app.route('/reset', methods=['POST'])
+@login_required
+def reset_db():
+    db = get_db()
+    try:
+        if is_pg():
+            query('DELETE FROM bets')
+            query('DELETE FROM balance_records')
+            query('DELETE FROM users')
+            query("ALTER SEQUENCE bets_id_seq RESTART WITH 1")
+            query("ALTER SEQUENCE balance_records_id_seq RESTART WITH 1")
+            query("ALTER SEQUENCE users_id_seq RESTART WITH 1")
+        else:
+            query('DELETE FROM bets')
+            query('DELETE FROM balance_records')
+            query('DELETE FROM users')
+            query("DELETE FROM sqlite_sequence")
+        db.commit()
+        flash('Database wiped clean. Ready for the challenge! ⚽🏆', 'success')
+    except Exception as e:
+        db.rollback()
+        logging.error(f"reset error: {e}")
+        flash(f'Error: {e}', 'danger')
+    return redirect(url_for('dashboard'))
+
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 8080))
     app.run(debug=True, host='0.0.0.0', port=port)
