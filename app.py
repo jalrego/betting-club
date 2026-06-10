@@ -19,7 +19,7 @@ app.secret_key = os.environ.get('SECRET_KEY', 'change-this-to-a-random-secret')
 app.config['UPLOAD_FOLDER'] = os.path.join(app.static_folder, 'uploads')
 app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
-DATABASE_URL = os.environ.get('DATABASE_URL', '')
+DATABASE_URL = os.environ.get('SUPABASE_URL', os.environ.get('DATABASE_URL', ''))
 DATABASE = os.path.join(app.root_path, 'betting.db')
 
 STARTING_BALANCE = 1000  # €10.00 in cents
