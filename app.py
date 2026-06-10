@@ -16,7 +16,7 @@ app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 DATABASE = os.path.join(app.root_path, 'betting.db')
 
-STARTING_BALANCE = 10.00
+STARTING_BALANCE = 1000  # €10.00 in cents
 
 
 def get_db():
@@ -44,14 +44,23 @@ def init_db():
         CREATE TABLE IF NOT EXISTS balance_records (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER NOT NULL,
-            balance REAL NOT NULL,
+            balance INTEGER NOT NULL,
             screenshot TEXT,
             notes TEXT,
             created_at TEXT NOT NULL DEFAULT (datetime('now')),
-            FOREIGN KEY (user_id) REFERENCES users(id)
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         );
+        CREATE INDEX IF NOT EXISTS idx_balance_user ON balance_records(user_id);
+        CREATE INDEX IF NOT EXISTS idx_balance_created ON balance_records(created_at);
     """)
     db.commit()
+
+    col_type = db.execute("PRAGMA table_info(balance_records)").fetchall()
+    for col in col_type:
+        if col[1] == 'balance' and col[2].upper() == 'REAL':
+            db.execute("UPDATE balance_records SET balance = CAST(balance * 100 AS INTEGER)")
+            db.commit()
+            break
 
 
 def allowed_file(filename):
@@ -152,17 +161,23 @@ def dashboard():
     db = get_db()
     user_id = session['user_id']
 
-    records = db.execute(
+    rows = db.execute(
         'SELECT * FROM balance_records WHERE user_id = ? ORDER BY created_at DESC',
         (user_id,)
     ).fetchall()
+
+    records = []
+    for r in rows:
+        d = dict(r)
+        d['balance'] = d['balance'] / 100.0
+        records.append(d)
 
     latest = records[0] if records else None
 
     return render_template('dashboard.html',
                            records=records,
                            latest=latest,
-                           starting=STARTING_BALANCE)
+                           starting=STARTING_BALANCE / 100.0)
 
 
 @app.route('/upload', methods=['POST'])
@@ -177,7 +192,7 @@ def upload():
         return redirect(url_for('dashboard'))
 
     try:
-        balance = float(balance_str)
+        balance = round(float(balance_str) * 100)
     except ValueError:
         flash('Balance must be a number.', 'danger')
         return redirect(url_for('dashboard'))
@@ -215,7 +230,7 @@ def uploaded_file(filename):
 def admin():
     db = get_db()
 
-    players = db.execute("""
+    rows = db.execute("""
         SELECT
             u.id,
             u.username,
@@ -224,7 +239,7 @@ def admin():
              WHERE user_id = u.id ORDER BY created_at DESC LIMIT 1
             ) AS latest_balance,
             (SELECT created_at FROM balance_records
-             WHERE user_id = u.id ORDER BY created_at DESC LIMIT 1
+              WHERE user_id = u.id ORDER BY created_at DESC LIMIT 1
             ) AS last_updated,
             (SELECT COUNT(*) FROM balance_records WHERE user_id = u.id
             ) AS updates
@@ -232,7 +247,14 @@ def admin():
         ORDER BY u.username
     """).fetchall()
 
-    return render_template('admin.html', players=players, starting=STARTING_BALANCE)
+    players = []
+    for r in rows:
+        d = dict(r)
+        if d['latest_balance'] is not None:
+            d['latest_balance'] = d['latest_balance'] / 100.0
+        players.append(d)
+
+    return render_template('admin.html', players=players, starting=STARTING_BALANCE / 100.0)
 
 
 if __name__ == '__main__':
