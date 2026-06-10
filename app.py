@@ -33,7 +33,7 @@ def get_db():
     if DATABASE_URL:
         import psycopg2
         from psycopg2.extras import RealDictCursor
-        g.db = psycopg2.connect(DATABASE_URL, sslmode='require')
+        g.db = psycopg2.connect(DATABASE_URL, sslmode='require', cursor_factory=RealDictCursor)
         g.db.autocommit = False
     else:
         g.db = sqlite3.connect(DATABASE)
@@ -48,6 +48,21 @@ def is_pg():
 
 def p():
     return '%s' if is_pg() else '?'
+
+
+def query(sql, params=None):
+    db = get_db()
+    if is_pg():
+        cur = db.cursor()
+        if params:
+            cur.execute(sql, params)
+        else:
+            cur.execute(sql)
+        return cur
+    else:
+        if params:
+            return db.execute(sql, params)
+        return db.execute(sql)
 
 
 def now():
@@ -69,7 +84,7 @@ def init_db():
     db = get_db()
     try:
         if is_pg():
-            db.execute("""
+            query("""
                 CREATE TABLE IF NOT EXISTS users (
                     id SERIAL PRIMARY KEY,
                     username TEXT UNIQUE NOT NULL,
@@ -77,7 +92,7 @@ def init_db():
                     created_at TIMESTAMP NOT NULL DEFAULT NOW()
                 )
             """)
-            db.execute("""
+            query("""
                 CREATE TABLE IF NOT EXISTS balance_records (
                     id SERIAL PRIMARY KEY,
                     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -87,13 +102,13 @@ def init_db():
                     created_at TIMESTAMP NOT NULL DEFAULT NOW()
                 )
             """)
-            db.execute("""
+            query("""
                 CREATE INDEX IF NOT EXISTS idx_balance_user ON balance_records(user_id)
             """)
-            db.execute("""
+            query("""
                 CREATE INDEX IF NOT EXISTS idx_balance_created ON balance_records(created_at)
             """)
-            db.execute("""
+            query("""
                 CREATE TABLE IF NOT EXISTS bets (
                     id SERIAL PRIMARY KEY,
                     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -107,7 +122,7 @@ def init_db():
                     created_at TIMESTAMP NOT NULL DEFAULT NOW()
                 )
             """)
-            db.execute("""
+            query("""
                 CREATE INDEX IF NOT EXISTS idx_bets_user ON bets(user_id)
             """)
         else:
@@ -159,7 +174,7 @@ def user_balance(user_id):
     db = get_db()
     total_staked = 0
     total_returned = 0
-    rows = db.execute(
+    rows = query(
         f'SELECT stake, odds, result FROM bets WHERE user_id = {p()}',
         (user_id,)
     ).fetchall()
@@ -172,7 +187,7 @@ def user_balance(user_id):
 
 def user_bets(user_id):
     db = get_db()
-    rows = db.execute(
+    rows = query(
         f'SELECT * FROM bets WHERE user_id = {p()} ORDER BY created_at DESC',
         (user_id,)
     ).fetchall()
@@ -186,7 +201,7 @@ def user_bets(user_id):
 
 def user_bet_stats(user_id):
     db = get_db()
-    rows = db.execute(
+    rows = query(
         f'SELECT result, COUNT(*) as cnt, SUM(stake) as total FROM bets WHERE user_id = {p()} GROUP BY result',
         (user_id,)
     ).fetchall()
@@ -269,7 +284,7 @@ def register():
             return render_template('register.html')
 
         db = get_db()
-        existing = db.execute(
+        existing = query(
             f'SELECT id FROM users WHERE username = {p()}', (username,)
         ).fetchone()
         if existing:
@@ -277,7 +292,7 @@ def register():
             return render_template('register.html')
 
         pw_hash = generate_password_hash(password, method='pbkdf2:sha256')
-        db.execute(
+        query(
             f'INSERT INTO users (username, password_hash) VALUES ({p()}, {p()})',
             (username, pw_hash)
         )
@@ -296,7 +311,7 @@ def login():
         password = request.form['password']
 
         db = get_db()
-        user = db.execute(
+        user = query(
             f'SELECT * FROM users WHERE username = {p()}', (username,)
         ).fetchone()
 
@@ -329,7 +344,7 @@ def dashboard():
         bets = user_bets(user_id)
         stats = user_bet_stats(user_id)
 
-        rows = db.execute(
+        rows = query(
             f'SELECT * FROM balance_records WHERE user_id = {p()} ORDER BY created_at DESC',
             (user_id,)
         ).fetchall()
@@ -384,7 +399,7 @@ def upload():
         file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
 
     db = get_db()
-    db.execute(
+    query(
         'INSERT INTO balance_records (user_id, balance, screenshot, notes) '
         f'VALUES ({p()}, {p()}, {p()}, {p()})',
         (session['user_id'], balance, filename, notes)
@@ -429,7 +444,7 @@ def new_bet():
         flash('Insufficient balance. You cannot stake more than your available funds.', 'danger')
         return redirect(url_for('dashboard'))
 
-    db.execute(
+    query(
         'INSERT INTO bets (user_id, match_info, round, stake, odds, pick) '
         f'VALUES ({p()}, {p()}, {p()}, {p()}, {p()}, {p()})',
         (session['user_id'], match_info, round_, stake, odds, pick)
@@ -449,7 +464,7 @@ def settle_bet(bet_id):
         return redirect(url_for('dashboard'))
 
     db = get_db()
-    bet = db.execute(
+    bet = query(
         f'SELECT * FROM bets WHERE id = {p()} AND user_id = {p()}',
         (bet_id, session['user_id'])
     ).fetchone()
@@ -462,7 +477,7 @@ def settle_bet(bet_id):
         flash('This bet has already been settled.', 'danger')
         return redirect(url_for('dashboard'))
 
-    db.execute(
+    query(
         f'UPDATE bets SET result = {p()}, settled_at = {now()} WHERE id = {p()}',
         (result, bet_id)
     )
@@ -476,7 +491,7 @@ def settle_bet(bet_id):
 @login_required
 def delete_bet(bet_id):
     db = get_db()
-    bet = db.execute(
+    bet = query(
         f'SELECT * FROM bets WHERE id = {p()} AND user_id = {p()}',
         (bet_id, session['user_id'])
     ).fetchone()
@@ -489,7 +504,7 @@ def delete_bet(bet_id):
         flash('Cannot delete a settled bet.', 'danger')
         return redirect(url_for('dashboard'))
 
-    db.execute(
+    query(
         f'DELETE FROM bets WHERE id = {p()}',
         (bet_id,)
     )
@@ -510,7 +525,7 @@ def admin():
     db = get_db()
 
     try:
-        rows = db.execute("""
+        rows = query("""
             SELECT
                 u.id,
                 u.username,
@@ -546,7 +561,7 @@ def leaderboard():
     db = get_db()
 
     try:
-        users = db.execute(
+        users = query(
             'SELECT id, username FROM users ORDER BY username'
         ).fetchall()
 
@@ -576,7 +591,7 @@ def leaderboard():
 def user_profile(user_id):
     db = get_db()
 
-    user = db.execute(
+    user = query(
         f'SELECT * FROM users WHERE id = {p()}',
         (user_id,)
     ).fetchone()
