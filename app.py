@@ -23,6 +23,7 @@ DATABASE_URL = os.environ.get('DATABASE_URL', '')
 DATABASE = os.path.join(app.root_path, 'betting.db')
 
 STARTING_BALANCE = 1000  # €10.00 in cents
+ROUNDS = ['Group Stage', 'Round of 16', 'Quarter-final', 'Semi-final', 'Final']
 
 
 def get_db():
@@ -92,6 +93,23 @@ def init_db():
             db.execute("""
                 CREATE INDEX IF NOT EXISTS idx_balance_created ON balance_records(created_at)
             """)
+            db.execute("""
+                CREATE TABLE IF NOT EXISTS bets (
+                    id SERIAL PRIMARY KEY,
+                    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                    match_info TEXT NOT NULL,
+                    round TEXT NOT NULL,
+                    stake INTEGER NOT NULL,
+                    odds REAL NOT NULL,
+                    pick TEXT NOT NULL,
+                    result TEXT NOT NULL DEFAULT 'pending',
+                    settled_at TIMESTAMP,
+                    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+                )
+            """)
+            db.execute("""
+                CREATE INDEX IF NOT EXISTS idx_bets_user ON bets(user_id)
+            """)
         else:
             db.executescript("""
                 CREATE TABLE IF NOT EXISTS users (
@@ -111,6 +129,20 @@ def init_db():
                 );
                 CREATE INDEX IF NOT EXISTS idx_balance_user ON balance_records(user_id);
                 CREATE INDEX IF NOT EXISTS idx_balance_created ON balance_records(created_at);
+                CREATE TABLE IF NOT EXISTS bets (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER NOT NULL,
+                    match_info TEXT NOT NULL,
+                    round TEXT NOT NULL,
+                    stake INTEGER NOT NULL,
+                    odds REAL NOT NULL,
+                    pick TEXT NOT NULL,
+                    result TEXT NOT NULL DEFAULT 'pending',
+                    settled_at TEXT,
+                    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+                );
+                CREATE INDEX IF NOT EXISTS idx_bets_user ON bets(user_id);
             """)
         db.commit()
     except Exception as e:
@@ -121,6 +153,54 @@ def init_db():
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+def user_balance(user_id):
+    db = get_db()
+    total_staked = 0
+    total_returned = 0
+    rows = db.execute(
+        f'SELECT stake, odds, result FROM bets WHERE user_id = {p()}',
+        (user_id,)
+    ).fetchall()
+    for r in rows:
+        total_staked += r['stake']
+        if r['result'] == 'won':
+            total_returned += round(r['stake'] * r['odds'])
+    return STARTING_BALANCE - total_staked + total_returned
+
+
+def user_bets(user_id):
+    db = get_db()
+    rows = db.execute(
+        f'SELECT * FROM bets WHERE user_id = {p()} ORDER BY created_at DESC',
+        (user_id,)
+    ).fetchall()
+    bets = []
+    for r in rows:
+        d = dict(r)
+        d['stake'] = d['stake'] / 100.0
+        bets.append(d)
+    return bets
+
+
+def user_bet_stats(user_id):
+    db = get_db()
+    rows = db.execute(
+        f'SELECT result, COUNT(*) as cnt, SUM(stake) as total FROM bets WHERE user_id = {p()} GROUP BY result',
+        (user_id,)
+    ).fetchall()
+    stats = {'won': 0, 'lost': 0, 'pending': 0, 'cashout': 0, 'total': 0, 'staked': 0, 'won_amount': 0}
+    for r in rows:
+        result = r['result']
+        stats[result] = r['cnt']
+        stats['total'] += r['cnt']
+        stats['staked'] += r['total'] if r['total'] else 0
+    # calculate win rate
+    settled = stats['won'] + stats['lost']
+    stats['win_rate'] = round(stats['won'] / settled * 100) if settled > 0 else 0
+    stats['staked'] = stats['staked'] / 100.0
+    return stats
 
 
 def login_required(f):
@@ -223,6 +303,10 @@ def dashboard():
     user_id = session['user_id']
 
     try:
+        balance = user_balance(user_id)
+        bets = user_bets(user_id)
+        stats = user_bet_stats(user_id)
+
         rows = db.execute(
             f'SELECT * FROM balance_records WHERE user_id = {p()} ORDER BY created_at DESC',
             (user_id,)
@@ -240,8 +324,12 @@ def dashboard():
         raise
 
     return render_template('dashboard.html',
+                           balance=balance / 100.0,
+                           bets=bets,
+                           stats=stats,
                            records=records,
                            latest=latest,
+                           rounds=ROUNDS,
                            starting=STARTING_BALANCE / 100.0)
 
 
@@ -282,6 +370,97 @@ def upload():
     db.commit()
 
     flash('Balance recorded!', 'success')
+    return redirect(url_for('dashboard'))
+
+
+@app.route('/bet/new', methods=['POST'])
+@login_required
+def new_bet():
+    match_info = request.form.get('match_info', '').strip()
+    round_ = request.form.get('round', '').strip()
+    stake_str = request.form.get('stake', '').strip()
+    odds_str = request.form.get('odds', '').strip()
+    pick = request.form.get('pick', '').strip()
+
+    if not all([match_info, round_, stake_str, odds_str, pick]):
+        flash('All bet fields are required.', 'danger')
+        return redirect(url_for('dashboard'))
+
+    try:
+        stake = round(float(stake_str) * 100)
+        odds = float(odds_str)
+    except ValueError:
+        flash('Stake and odds must be numbers.', 'danger')
+        return redirect(url_for('dashboard'))
+
+    if stake < 1:
+        flash('Stake must be at least €0.01.', 'danger')
+        return redirect(url_for('dashboard'))
+
+    if odds <= 1:
+        flash('Odds must be greater than 1.00.', 'danger')
+        return redirect(url_for('dashboard'))
+
+    db = get_db()
+    db.execute(
+        'INSERT INTO bets (user_id, match_info, round, stake, odds, pick) '
+        f'VALUES ({p()}, {p()}, {p()}, {p()}, {p()}, {p()})',
+        (session['user_id'], match_info, round_, stake, odds, pick)
+    )
+    db.commit()
+
+    flash('Bet placed!', 'success')
+    return redirect(url_for('dashboard'))
+
+
+@app.route('/bet/<int:bet_id>/settle', methods=['POST'])
+@login_required
+def settle_bet(bet_id):
+    result = request.form.get('result', '').strip()
+    if result not in ('won', 'lost', 'cashout'):
+        flash('Invalid result.', 'danger')
+        return redirect(url_for('dashboard'))
+
+    db = get_db()
+    bet = db.execute(
+        f'SELECT * FROM bets WHERE id = {p()} AND user_id = {p()}',
+        (bet_id, session['user_id'])
+    ).fetchone()
+
+    if not bet:
+        flash('Bet not found.', 'danger')
+        return redirect(url_for('dashboard'))
+
+    db.execute(
+        f'UPDATE bets SET result = {p()}, settled_at = {now()} WHERE id = {p()}',
+        (result, bet_id)
+    )
+    db.commit()
+
+    flash('Bet result updated!', 'success')
+    return redirect(url_for('dashboard'))
+
+
+@app.route('/bet/<int:bet_id>/delete', methods=['POST'])
+@login_required
+def delete_bet(bet_id):
+    db = get_db()
+    bet = db.execute(
+        f'SELECT * FROM bets WHERE id = {p()} AND user_id = {p()}',
+        (bet_id, session['user_id'])
+    ).fetchone()
+
+    if not bet:
+        flash('Bet not found.', 'danger')
+        return redirect(url_for('dashboard'))
+
+    db.execute(
+        f'DELETE FROM bets WHERE id = {p()}',
+        (bet_id,)
+    )
+    db.commit()
+
+    flash('Bet deleted.', 'success')
     return redirect(url_for('dashboard'))
 
 
@@ -332,29 +511,23 @@ def leaderboard():
     db = get_db()
 
     try:
-        rows = db.execute("""
-            SELECT
-                u.id,
-                u.username,
-                (SELECT balance FROM balance_records
-                 WHERE user_id = u.id ORDER BY created_at DESC LIMIT 1
-                ) AS latest_balance,
-                (SELECT COUNT(*) FROM balance_records WHERE user_id = u.id
-                ) AS updates
-            FROM users u
-            ORDER BY u.username
-        """).fetchall()
+        users = db.execute(
+            'SELECT id, username FROM users ORDER BY username'
+        ).fetchall()
 
         players = []
-        for r in rows:
-            d = dict(r)
-            if d['latest_balance'] is not None:
-                d['latest_balance'] = d['latest_balance'] / 100.0
-            players.append(d)
+        for u in users:
+            bal = user_balance(u['id'])
+            stats = user_bet_stats(u['id'])
+            players.append({
+                'username': u['username'],
+                'latest_balance': bal / 100.0,
+                'updates': stats['total'],
+                'win_rate': stats['win_rate'],
+                'staked': stats['staked'],
+            })
 
-        players.sort(key=lambda p: (
-            p['latest_balance'] if p['latest_balance'] is not None else -1
-        ), reverse=True)
+        players.sort(key=lambda p: p['latest_balance'], reverse=True)
     except Exception as e:
         logging.error(f"leaderboard error: {e}")
         raise

@@ -3,16 +3,15 @@
 
 <h1 style="margin-bottom: 1.5rem;">Dashboard</h1>
 
-{% if latest %}
 <div class="stat-grid" style="margin-bottom: 1rem;">
   <div class="card stat-box">
     <div class="label">Balance</div>
-    <div class="value">{{ "%.2f"|format(latest.balance) }}</div>
+    <div class="value">{{ "%.2f"|format(balance) }}</div>
     <div class="label" style="margin-top: 0.25rem;">&euro;</div>
   </div>
   <div class="card stat-box">
     <div class="label">Profit / Loss</div>
-    {% set pl = latest.balance - starting %}
+    {% set pl = balance - starting %}
     {% if pl > 0 %}
       <div class="value green">+{{ "%.2f"|format(pl) }}</div>
       <div class="label green" style="margin-top: 0.25rem;">&uarr; up</div>
@@ -26,7 +25,7 @@
   </div>
   <div class="card stat-box">
     <div class="label">Return</div>
-    {% set pl = latest.balance - starting %}
+    {% set pl = balance - starting %}
     {% if pl > 0 %}
       <div class="value green">+{{ "%.1f"|format(pl / starting * 100) }}%</div>
     {% elif pl < 0 %}
@@ -37,41 +36,135 @@
     <div class="label" style="margin-top: 0.25rem;">vs &euro;{{ "%.2f"|format(starting) }}</div>
   </div>
 </div>
-{% endif %}
+
+<div class="stat-grid" style="margin-bottom: 1rem;">
+  <div class="card stat-box">
+    <div class="label">Bets</div>
+    <div class="value">{{ stats.total }}</div>
+  </div>
+  <div class="card stat-box">
+    <div class="label">Won</div>
+    <div class="value green">{{ stats.won }}</div>
+  </div>
+  <div class="card stat-box">
+    <div class="label">Win Rate</div>
+    <div class="value">{{ stats.win_rate }}%</div>
+  </div>
+</div>
 
 <div class="card">
-  <h2>Record Balance</h2>
-  <form method="POST" action="{{ url_for('upload') }}" enctype="multipart/form-data">
-    <label for="balance">Current Balance (&euro;)</label>
-    <input type="number" step="0.01" name="balance" id="balance" required placeholder="e.g. 12.50">
-
-    <label for="screenshot">Screenshot (optional)</label>
-    <input type="file" name="screenshot" id="screenshot" accept="image/png,image/jpeg,image/gif,image/webp">
-
-    <label for="notes">Notes (optional)</label>
-    <input type="text" name="notes" id="notes" placeholder="e.g. After matchday 3">
-
-    <button type="submit" class="btn btn-primary">Save</button>
+  <h2>Place a Bet</h2>
+  <form method="POST" action="{{ url_for('new_bet') }}">
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 0.75rem;">
+      <div>
+        <label for="match_info">Match</label>
+        <input type="text" name="match_info" id="match_info" required placeholder="e.g. Portugal vs Brazil">
+      </div>
+      <div>
+        <label for="round">Round</label>
+        <select name="round" id="round" required style="width:100%;padding:0.6rem 0.75rem;background:#0f1117;border:1px solid #262a36;border-radius:6px;color:#e1e4ed;font-size:0.9rem;margin-bottom:0.75rem;">
+          <option value="">Select round</option>
+          {% for r in rounds %}
+            <option value="{{ r }}">{{ r }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label for="stake">Stake (&euro;)</label>
+        <input type="number" step="0.01" min="0.01" name="stake" id="stake" required placeholder="e.g. 5.00">
+      </div>
+      <div>
+        <label for="odds">Odds</label>
+        <input type="number" step="0.01" min="1.01" name="odds" id="odds" required placeholder="e.g. 2.10">
+      </div>
+    </div>
+    <div>
+      <label for="pick">Your Pick</label>
+      <input type="text" name="pick" id="pick" required placeholder="e.g. Brazil to win">
+    </div>
+    <button type="submit" class="btn btn-primary">Place Bet</button>
   </form>
 </div>
 
-{% if latest and latest.screenshot %}
+{% if bets %}
+<div class="card" style="padding: 0; overflow: hidden;">
+  <h2 style="padding: 1rem 1rem 0 1rem;">My Bets</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Match</th>
+        <th>Round</th>
+        <th>Stake</th>
+        <th>Odds</th>
+        <th>Pick</th>
+        <th>Result</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for bet in bets %}
+      <tr>
+        <td><strong>{{ bet.match_info }}</strong></td>
+        <td class="text-sm text-muted">{{ bet.round }}</td>
+        <td>&euro;{{ "%.2f"|format(bet.stake) }}</td>
+        <td>{{ "%.2f"|format(bet.odds) }}</td>
+        <td class="text-sm">{{ bet.pick }}</td>
+        <td>
+          {% if bet.result == 'pending' %}
+            <span class="text-muted">&#9711; Pending</span>
+          {% elif bet.result == 'won' %}
+            <span class="green">&#9679; Won</span>
+          {% elif bet.result == 'lost' %}
+            <span class="red">&#9679; Lost</span>
+          {% elif bet.result == 'cashout' %}
+            <span class="gold">&#9679; Cashed</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if bet.result == 'pending' %}
+          <form method="POST" action="{{ url_for('settle_bet', bet_id=bet.id) }}" style="display:inline">
+            <button name="result" value="won" class="btn btn-secondary" style="padding:0.2rem 0.5rem;font-size:0.7rem;">Won</button>
+            <button name="result" value="lost" class="btn btn-secondary" style="padding:0.2rem 0.5rem;font-size:0.7rem;">Lost</button>
+          </form>
+          {% endif %}
+          <form method="POST" action="{{ url_for('delete_bet', bet_id=bet.id) }}" style="display:inline" onsubmit="return confirm('Delete this bet?')">
+            <button class="btn btn-secondary" style="padding:0.2rem 0.5rem;font-size:0.7rem;">&times;</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
 <div class="card">
-  <h2>Latest Screenshot</h2>
-  <a href="{{ url_for('uploaded_file', filename=latest.screenshot) }}" target="_blank">
-    <img src="{{ url_for('uploaded_file', filename=latest.screenshot) }}" alt="Screenshot" class="screenshot">
-  </a>
-  {% if latest.notes %}
-    <p class="text-muted text-sm mt-2">{{ latest.notes }} &mdash; {{ latest.created_at }}</p>
-  {% else %}
-    <p class="text-muted text-sm mt-2">{{ latest.created_at }}</p>
-  {% endif %}
+  <p class="text-muted">No bets yet. Place your first bet above.</p>
 </div>
 {% endif %}
 
+<div class="card" style="margin-top: 2rem;">
+  <h2>Manual Balance Check-in</h2>
+  <p class="text-muted text-sm" style="margin-bottom: 0.75rem;">Optional: upload a screenshot from your betting platform for verification.</p>
+  <form method="POST" action="{{ url_for('upload') }}" enctype="multipart/form-data">
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 0.75rem;">
+      <div>
+        <label for="balance">Platform Balance (&euro;)</label>
+        <input type="number" step="0.01" name="balance" id="balance" placeholder="e.g. 12.50">
+      </div>
+      <div>
+        <label for="notes">Notes (optional)</label>
+        <input type="text" name="notes" id="notes" placeholder="e.g. After matchday 3">
+      </div>
+    </div>
+    <label for="screenshot">Screenshot</label>
+    <input type="file" name="screenshot" id="screenshot" accept="image/png,image/jpeg,image/gif,image/webp">
+    <button type="submit" class="btn btn-secondary">Save Check-in</button>
+  </form>
+</div>
+
 {% if records %}
-<div class="card">
-  <h2>History</h2>
+<div class="card" style="padding: 0; overflow: hidden;">
+  <h2 style="padding: 1rem 1rem 0 1rem;">Check-in History</h2>
   <table>
     <thead>
       <tr>
@@ -89,7 +182,7 @@
         <td><strong>&euro;{{ "%.2f"|format(record.balance) }}</strong></td>
         <td>
           {% if loop.last %}
-            <span class="text-muted text-sm">Initial</span>
+            <span class="text-muted text-sm">Check-in</span>
           {% else %}
             {% set diff = record.balance - records[loop.index0 + 1].balance %}
             {% if diff > 0 %}
@@ -111,10 +204,6 @@
       {% endfor %}
     </tbody>
   </table>
-</div>
-{% else %}
-<div class="card">
-  <p class="text-muted">No records yet. Add your first balance entry above.</p>
 </div>
 {% endif %}
 

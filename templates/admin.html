@@ -12,7 +12,9 @@
         <th>Player</th>
         <th>Balance</th>
         <th>Profit / Loss</th>
-        <th>Updates</th>
+        <th>Bets</th>
+        <th>Win Rate</th>
+        <th>Staked</th>
       </tr>
     </thead>
     <tbody>
@@ -51,12 +53,21 @@
             <span class="text-muted">&mdash;</span>
           {% endif %}
         </td>
-        <td class="text-sm text-muted">{{ player.updates }}</td>
+        <td class="text-sm">{{ player.updates }}</td>
+        <td class="text-sm">{{ player.win_rate }}%</td>
+        <td class="text-sm text-muted">&euro;{{ "%.2f"|format(player.staked) }}</td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
 </div>
+<details style="margin-top: 1rem;">
+  <summary class="text-muted text-sm" style="cursor:pointer;">How balance is calculated</summary>
+  <p class="text-muted text-sm" style="margin-top: 0.5rem;">
+    Balance = &euro;10 initial &minus; all stakes + all returns (stake &times; odds on won bets).
+    Pending bets count as money at risk.
+  </p>
+</details>
 {% else %}
 <div class="card">
   <p class="text-muted">No players yet.</p>
