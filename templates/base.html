@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Betting Club</title>
+  <title>⚽ Betting Club 2026</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -126,21 +126,24 @@
 <body>
   <nav>
     <div class="brand">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-        <rect x="2" y="2" width="20" height="20" rx="5" fill="#6366f1"/>
-        <path d="M7 12h10M12 7v10" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+      <svg width="28" height="28" viewBox="0 0 100 100" fill="none">
+        <circle cx="50" cy="50" r="45" fill="#6366f1"/>
+        <path d="M30 30 Q50 20 70 30 Q80 50 70 70 Q50 80 30 70 Q20 50 30 30Z" fill="#fff" opacity="0.15"/>
+        <path d="M38 55 Q42 35 50 30 Q58 35 62 55 Q58 75 50 80 Q42 75 38 55Z" fill="#fff" opacity="0.15"/>
+        <circle cx="50" cy="50" r="10" fill="none" stroke="#fff" stroke-width="2" opacity="0.3"/>
+        <text x="50" y="58" text-anchor="middle" fill="#fbbf24" font-size="22" font-weight="bold">26</text>
       </svg>
-      <span>betting club</span>
+      <span>Betting Club <span style="font-weight:400;font-size:0.8rem;color:#7f8494;">2026</span></span>
     </div>
     <div>
       {% if session.user_id %}
-        <span class="text-muted text-sm">{{ session.username }}</span>
-        <a href="{{ url_for('dashboard') }}">Dashboard</a>
-        <a href="{{ url_for('leaderboard') }}">Leaderboard</a>
-        <a href="{{ url_for('logout') }}">Logout</a>
+        <span class="text-muted text-sm">👤 {{ session.username }}</span>
+        <a href="{{ url_for('dashboard') }}">📊 Dashboard</a>
+        <a href="{{ url_for('leaderboard') }}">🏆 Leaderboard</a>
+        <a href="{{ url_for('logout') }}">🚪 Logout</a>
       {% else %}
-        <a href="{{ url_for('login') }}">Login</a>
-        <a href="{{ url_for('register') }}">Register</a>
+        <a href="{{ url_for('login') }}">🔐 Login</a>
+        <a href="{{ url_for('register') }}">📝 Register</a>
       {% endif %}
     </div>
   </nav>

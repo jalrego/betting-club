@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
 
-<h1 style="margin-bottom: 1.5rem;">Leaderboard</h1>
+<h1 style="margin-bottom: 1.5rem;">🏆 Leaderboard</h1>
 
 {% if players %}
 <div class="card" style="padding: 0; overflow: hidden;">
@@ -9,12 +9,12 @@
     <thead>
       <tr>
         <th style="padding-left: 1rem;">#</th>
-        <th>Player</th>
-        <th>Balance</th>
-        <th>Profit / Loss</th>
-        <th>Bets</th>
-        <th>Win Rate</th>
-        <th>Staked</th>
+        <th>👤 Player</th>
+        <th>💰 Balance</th>
+        <th>📈 P&amp;L</th>
+        <th>🎲 Bets</th>
+        <th>🎯 Win Rate</th>
+        <th>💵 Staked</th>
       </tr>
     </thead>
     <tbody>
@@ -22,11 +22,11 @@
       <tr>
         <td style="padding-left: 1rem;">
           {% if loop.index == 1 %}
-            <span class="rank-num gold" style="background: #332e0d; color: #fbbf24;">1</span>
+            <span class="rank-num gold" style="background: #332e0d; color: #fbbf24;">🏆</span>
           {% elif loop.index == 2 %}
-            <span class="rank-num silver" style="background: #1e202b; color: #9ca3af;">2</span>
+            <span class="rank-num silver" style="background: #1e202b; color: #9ca3af;">🥈</span>
           {% elif loop.index == 3 %}
-            <span class="rank-num bronze" style="background: #2a1a0d; color: #d97706;">3</span>
+            <span class="rank-num bronze" style="background: #2a1a0d; color: #d97706;">🥉</span>
           {% else %}
             <span class="rank-num">{{ loop.index }}</span>
           {% endif %}
@@ -43,11 +43,11 @@
           {% if player.latest_balance is not none %}
             {% set diff = player.latest_balance - starting %}
             {% if diff > 0 %}
-              <span class="green">+&euro;{{ "%.2f"|format(diff) }}</span>
+              <span class="green">🟢 +&euro;{{ "%.2f"|format(diff) }}</span>
             {% elif diff < 0 %}
-              <span class="red">&minus;&euro;{{ "%.2f"|format(-diff) }}</span>
+              <span class="red">🔴 &minus;&euro;{{ "%.2f"|format(-diff) }}</span>
             {% else %}
-              <span class="text-muted">&euro;0.00</span>
+              <span class="text-muted">⚪ &euro;0.00</span>
             {% endif %}
           {% else %}
             <span class="text-muted">&mdash;</span>
@@ -62,15 +62,15 @@
   </table>
 </div>
 <details style="margin-top: 1rem;">
-  <summary class="text-muted text-sm" style="cursor:pointer;">How balance is calculated</summary>
+  <summary class="text-muted text-sm" style="cursor:pointer;">📖 How balance is calculated</summary>
   <p class="text-muted text-sm" style="margin-top: 0.5rem;">
     Balance = &euro;10 initial &minus; all stakes + all returns (stake &times; odds on won bets).
-    Pending bets count as money at risk.
+    Pending bets count as money at risk 🎲
   </p>
 </details>
 {% else %}
 <div class="card">
-  <p class="text-muted">No players yet.</p>
+  <p class="text-muted">📭 No players yet. Get your friends to register! 🎉</p>
 </div>
 {% endif %}
 

@@ -2,13 +2,11 @@ import os
 import sys
 import sqlite3
 import logging
-from datetime import datetime
 from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
-from werkzeug.utils import secure_filename
 from flask import (
     Flask, g, render_template, request, redirect, url_for,
-    flash, session, send_from_directory
+    flash, session
 )
 
 logging.basicConfig(level=logging.INFO, stream=sys.stdout,
@@ -16,9 +14,6 @@ logging.basicConfig(level=logging.INFO, stream=sys.stdout,
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'change-this-to-a-random-secret')
-app.config['UPLOAD_FOLDER'] = os.path.join(app.static_folder, 'uploads')
-app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 DATABASE_URL = os.environ.get('SUPABASE_URL', os.environ.get('DATABASE_URL', ''))
 DATABASE = os.path.join(app.root_path, 'betting.db')
 
@@ -97,7 +92,6 @@ def init_db():
                     id SERIAL PRIMARY KEY,
                     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
                     balance INTEGER NOT NULL,
-                    screenshot TEXT,
                     notes TEXT,
                     created_at TIMESTAMP NOT NULL DEFAULT NOW()
                 )
@@ -137,7 +131,6 @@ def init_db():
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     user_id INTEGER NOT NULL,
                     balance INTEGER NOT NULL,
-                    screenshot TEXT,
                     notes TEXT,
                     created_at TEXT NOT NULL DEFAULT (datetime('now')),
                     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -163,11 +156,6 @@ def init_db():
     except Exception as e:
         logging.error(f"init_db failed: {e}")
         raise
-
-
-def allowed_file(filename):
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
 def user_balance(user_id):
@@ -343,19 +331,6 @@ def dashboard():
         balance = user_balance(user_id)
         bets = user_bets(user_id)
         stats = user_bet_stats(user_id)
-
-        rows = query(
-            f'SELECT * FROM balance_records WHERE user_id = {p()} ORDER BY created_at DESC',
-            (user_id,)
-        ).fetchall()
-
-        records = []
-        for r in rows:
-            d = dict(r)
-            d['balance'] = d['balance'] / 100.0
-            records.append(d)
-
-        latest = records[0] if records else None
     except Exception as e:
         logging.error(f"dashboard error: {e}")
         raise
@@ -364,50 +339,8 @@ def dashboard():
                            balance=balance / 100.0,
                            bets=bets,
                            stats=stats,
-                           records=records,
-                           latest=latest,
                            rounds=ROUNDS,
                            starting=STARTING_BALANCE / 100.0)
-
-
-@app.route('/upload', methods=['POST'])
-@login_required
-def upload():
-    balance_str = request.form.get('balance', '').strip()
-    notes = request.form.get('notes', '').strip()
-    file = request.files.get('screenshot')
-
-    if not balance_str:
-        flash('Please enter your current balance.', 'danger')
-        return redirect(url_for('dashboard'))
-
-    try:
-        balance = round(float(balance_str) * 100)
-    except ValueError:
-        flash('Balance must be a number.', 'danger')
-        return redirect(url_for('dashboard'))
-
-    filename = None
-    if file and file.filename:
-        if not allowed_file(file.filename):
-            flash('File type not allowed. Use PNG, JPG, GIF, or WebP.', 'danger')
-            return redirect(url_for('dashboard'))
-        filename = secure_filename(
-            f"{session['user_id']}_{datetime.utcnow().strftime('%Y%m%d%H%M%S')}_"
-            f"{file.filename}"
-        )
-        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-
-    db = get_db()
-    query(
-        'INSERT INTO balance_records (user_id, balance, screenshot, notes) '
-        f'VALUES ({p()}, {p()}, {p()}, {p()})',
-        (session['user_id'], balance, filename, notes)
-    )
-    db.commit()
-
-    flash('Balance recorded!', 'success')
-    return redirect(url_for('dashboard'))
 
 
 @app.route('/bet/new', methods=['POST'])
@@ -514,11 +447,6 @@ def delete_bet(bet_id):
     return redirect(url_for('dashboard'))
 
 
-@app.route('/uploads/<filename>')
-def uploaded_file(filename):
-    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
-
-
 @app.route('/admin')
 @login_required
 def admin():
@@ -620,6 +548,5 @@ if __name__ == '__main__':
     port = int(os.environ.get('PORT', 8080))
     app.run(debug=True, host='0.0.0.0', port=port)
 else:
-    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
     with app.app_context():
         init_db()
