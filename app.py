@@ -342,15 +342,19 @@ def leaderboard():
                 (SELECT COUNT(*) FROM balance_records WHERE user_id = u.id
                 ) AS updates
             FROM users u
-            WHERE (SELECT id FROM balance_records WHERE user_id = u.id LIMIT 1) IS NOT NULL
-            ORDER BY latest_balance DESC
+            ORDER BY u.username
         """).fetchall()
 
         players = []
         for r in rows:
             d = dict(r)
-            d['latest_balance'] = d['latest_balance'] / 100.0
+            if d['latest_balance'] is not None:
+                d['latest_balance'] = d['latest_balance'] / 100.0
             players.append(d)
+
+        players.sort(key=lambda p: (
+            p['latest_balance'] if p['latest_balance'] is not None else -1
+        ), reverse=True)
     except Exception as e:
         logging.error(f"leaderboard error: {e}")
         raise
