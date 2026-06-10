@@ -1,15 +1,48 @@
 {% extends "base.html" %}
 {% block content %}
 
-<div class="flex-between" style="margin-bottom: 1rem;">
-  <h1>Dashboard</h1>
-  <span class="text-muted text-sm">Initial deposit: €{{ "%.2f"|format(starting) }}</span>
+<h1 style="margin-bottom: 1.5rem;">Dashboard</h1>
+
+{% if latest %}
+<div class="stat-grid" style="margin-bottom: 1rem;">
+  <div class="card stat-box">
+    <div class="label">Balance</div>
+    <div class="value">{{ "%.2f"|format(latest.balance) }}</div>
+    <div class="label" style="margin-top: 0.25rem;">&euro;</div>
+  </div>
+  <div class="card stat-box">
+    <div class="label">Profit / Loss</div>
+    {% set pl = latest.balance - starting %}
+    {% if pl > 0 %}
+      <div class="value green">+{{ "%.2f"|format(pl) }}</div>
+      <div class="label green" style="margin-top: 0.25rem;">&uarr; up</div>
+    {% elif pl < 0 %}
+      <div class="value red">{{ "%.2f"|format(pl) }}</div>
+      <div class="label red" style="margin-top: 0.25rem;">&darr; down</div>
+    {% else %}
+      <div class="value">0.00</div>
+      <div class="label" style="margin-top: 0.25rem;">even</div>
+    {% endif %}
+  </div>
+  <div class="card stat-box">
+    <div class="label">Return</div>
+    {% set pl = latest.balance - starting %}
+    {% if pl > 0 %}
+      <div class="value green">+{{ "%.1f"|format(pl / starting * 100) }}%</div>
+    {% elif pl < 0 %}
+      <div class="value red">{{ "%.1f"|format(pl / starting * 100) }}%</div>
+    {% else %}
+      <div class="value">0.0%</div>
+    {% endif %}
+    <div class="label" style="margin-top: 0.25rem;">vs &euro;{{ "%.2f"|format(starting) }}</div>
+  </div>
 </div>
+{% endif %}
 
 <div class="card">
   <h2>Record Balance</h2>
   <form method="POST" action="{{ url_for('upload') }}" enctype="multipart/form-data">
-    <label for="balance">Current Balance (€)</label>
+    <label for="balance">Current Balance (&euro;)</label>
     <input type="number" step="0.01" name="balance" id="balance" required placeholder="e.g. 12.50">
 
     <label for="screenshot">Screenshot (optional)</label>
@@ -22,20 +55,16 @@
   </form>
 </div>
 
-{% if latest %}
+{% if latest and latest.screenshot %}
 <div class="card">
-  <div class="flex-between">
-    <h2>Latest Balance</h2>
-    <div class="balance-large">€{{ "%.2f"|format(latest.balance) }}</div>
-  </div>
+  <h2>Latest Screenshot</h2>
+  <a href="{{ url_for('uploaded_file', filename=latest.screenshot) }}" target="_blank">
+    <img src="{{ url_for('uploaded_file', filename=latest.screenshot) }}" alt="Screenshot" class="screenshot">
+  </a>
   {% if latest.notes %}
-    <p class="text-muted text-sm">{{ latest.notes }}</p>
-  {% endif %}
-  <p class="text-muted text-sm">{{ latest.created_at }}</p>
-  {% if latest.screenshot %}
-    <a href="{{ url_for('uploaded_file', filename=latest.screenshot) }}" target="_blank">
-      <img src="{{ url_for('uploaded_file', filename=latest.screenshot) }}" alt="Screenshot" class="screenshot">
-    </a>
+    <p class="text-muted text-sm mt-2">{{ latest.notes }} &mdash; {{ latest.created_at }}</p>
+  {% else %}
+    <p class="text-muted text-sm mt-2">{{ latest.created_at }}</p>
   {% endif %}
 </div>
 {% endif %}
@@ -50,34 +79,32 @@
         <th>Balance</th>
         <th>Change</th>
         <th>Notes</th>
-        <th>Screenshot</th>
+        <th></th>
       </tr>
     </thead>
     <tbody>
       {% for record in records %}
       <tr>
-        <td class="text-sm">{{ record.created_at }}</td>
-        <td><strong>€{{ "%.2f"|format(record.balance) }}</strong></td>
+        <td class="text-sm text-muted">{{ record.created_at[:10] }}</td>
+        <td><strong>&euro;{{ "%.2f"|format(record.balance) }}</strong></td>
         <td>
           {% if loop.last %}
-            <span class="badge badge-green">Initial</span>
+            <span class="text-muted text-sm">Initial</span>
           {% else %}
             {% set diff = record.balance - records[loop.index0 + 1].balance %}
             {% if diff > 0 %}
-              <span class="badge badge-green">+€{{ "%.2f"|format(diff) }}</span>
+              <span class="green">+&euro;{{ "%.2f"|format(diff) }}</span>
             {% elif diff < 0 %}
-              <span class="badge badge-red">-€{{ "%.2f"|format(-diff) }}</span>
+              <span class="red">&minus;&euro;{{ "%.2f"|format(-diff) }}</span>
             {% else %}
-              <span class="badge badge-yellow">€0.00</span>
+              <span class="text-muted">&euro;0.00</span>
             {% endif %}
           {% endif %}
         </td>
         <td class="text-sm text-muted">{{ record.notes or '' }}</td>
         <td>
           {% if record.screenshot %}
-            <a href="{{ url_for('uploaded_file', filename=record.screenshot) }}" target="_blank">View</a>
-          {% else %}
-            <span class="text-muted">—</span>
+            <a href="{{ url_for('uploaded_file', filename=record.screenshot) }}" target="_blank" class="text-sm">View</a>
           {% endif %}
         </td>
       </tr>
@@ -87,7 +114,7 @@
 </div>
 {% else %}
 <div class="card">
-  <p class="text-muted">No records yet. Add your first balance entry above!</p>
+  <p class="text-muted">No records yet. Add your first balance entry above.</p>
 </div>
 {% endif %}
 

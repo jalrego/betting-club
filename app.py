@@ -280,6 +280,38 @@ def admin():
     return render_template('admin.html', players=players, starting=STARTING_BALANCE / 100.0)
 
 
+@app.route('/leaderboard')
+@login_required
+def leaderboard():
+    db = get_db()
+
+    try:
+        rows = db.execute("""
+            SELECT
+                u.id,
+                u.username,
+                (SELECT balance FROM balance_records
+                 WHERE user_id = u.id ORDER BY created_at DESC LIMIT 1
+                ) AS latest_balance,
+                (SELECT COUNT(*) FROM balance_records WHERE user_id = u.id
+                ) AS updates
+            FROM users u
+            WHERE (SELECT id FROM balance_records WHERE user_id = u.id LIMIT 1) IS NOT NULL
+            ORDER BY latest_balance DESC
+        """).fetchall()
+
+        players = []
+        for r in rows:
+            d = dict(r)
+            d['latest_balance'] = d['latest_balance'] / 100.0
+            players.append(d)
+    except Exception as e:
+        logging.error(f"leaderboard error: {e}")
+        raise
+
+    return render_template('admin.html', players=players, starting=STARTING_BALANCE / 100.0)
+
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 8080))
     app.run(debug=True, host='0.0.0.0', port=port)

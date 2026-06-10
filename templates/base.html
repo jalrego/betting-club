@@ -8,132 +8,135 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #0d0a14;
-      color: #e2dff0;
+      background: #0f1117;
+      color: #e1e4ed;
       min-height: 100vh;
     }
     nav {
-      background: linear-gradient(135deg, #1a0e2e 0%, #2d1b4e 100%);
-      padding: 1rem 2rem;
+      background: #161922;
+      padding: 0.75rem 2rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-bottom: 1px solid #4a2d7a;
-      box-shadow: 0 2px 20px rgba(120, 60, 200, 0.15);
+      border-bottom: 1px solid #262a36;
     }
     nav .brand {
       font-weight: 800;
-      font-size: 1.3rem;
+      font-size: 1.2rem;
       display: flex;
       align-items: center;
       gap: 0.5rem;
-      background: linear-gradient(135deg, #c084fc, #a855f7);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      color: #e1e4ed;
     }
-    nav .brand svg {
-      -webkit-text-fill-color: initial;
-      flex-shrink: 0;
-    }
-    nav a { color: #a78bfa; text-decoration: none; margin-left: 1.5rem; }
-    nav a:hover { color: #c4b5fd; }
+    nav .brand span { color: #818cf8; }
+    nav a { color: #7f8494; text-decoration: none; margin-left: 1.5rem; font-size: 0.9rem; }
+    nav a:hover { color: #e1e4ed; }
     .container { max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
     .alerts { margin-bottom: 1rem; }
     .alert {
       padding: 0.75rem 1rem;
       border-radius: 6px;
       margin-bottom: 0.5rem;
+      font-size: 0.9rem;
     }
-    .alert-success { background: #1a0e2e; color: #a78bfa; border: 1px solid #4a2d7a; }
-    .alert-danger  { background: #2d0a1e; color: #f9a8d4; border: 1px solid #6b2144; }
-    .alert-warning { background: #2d1a0e; color: #fcd34d; border: 1px solid #6b4421; }
-    .alert-info    { background: #0e1a2d; color: #93c5fd; border: 1px solid #21446b; }
+    .alert-success { background: #0d2217; color: #4ade80; border: 1px solid #166534; }
+    .alert-danger  { background: #220d0d; color: #f87171; border: 1px solid #991b1b; }
+    .alert-warning { background: #221a0d; color: #fbbf24; border: 1px solid #854d0e; }
+    .alert-info    { background: #0d1722; color: #60a5fa; border: 1px solid #1e3a5f; }
     .card {
-      background: linear-gradient(135deg, #1a0e2e 0%, #23153b 100%);
-      border-radius: 10px;
+      background: #161922;
+      border-radius: 8px;
       padding: 1.5rem;
-      margin-bottom: 1.5rem;
-      border: 1px solid #3a2260;
-      box-shadow: 0 4px 24px rgba(80, 40, 140, 0.15);
+      margin-bottom: 1rem;
+      border: 1px solid #262a36;
     }
-    .card h2 { margin-bottom: 1rem; font-size: 1.1rem; color: #a78bfa; }
+    .card h2 { margin-bottom: 0.75rem; font-size: 0.8rem; color: #7f8494; text-transform: uppercase; letter-spacing: 0.05em; }
+    .card-green { border-left: 3px solid #22c55e; }
+    .card-red   { border-left: 3px solid #ef4444; }
     .btn {
       display: inline-block;
       padding: 0.5rem 1.25rem;
       border-radius: 6px;
       border: none;
       cursor: pointer;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
+      font-weight: 600;
       text-decoration: none;
     }
-    .btn-primary {
-      background: linear-gradient(135deg, #7c3aed, #a855f7);
-      color: #fff;
-    }
-    .btn-primary:hover { background: linear-gradient(135deg, #6d28d9, #9333ea); }
-    .btn-secondary { background: #3b2260; color: #c4b5fd; }
-    .btn-secondary:hover { background: #4a2d7a; }
-    .btn-danger { background: #be185d; color: #fff; }
-    .btn-danger:hover { background: #9d174d; }
-    label { display: block; margin-bottom: 0.35rem; font-size: 0.85rem; color: #a78bfa; }
+    .btn-primary { background: #6366f1; color: #fff; }
+    .btn-primary:hover { background: #4f46e5; }
+    .btn-secondary { background: #262a36; color: #e1e4ed; }
+    .btn-secondary:hover { background: #333849; }
+    label { display: block; margin-bottom: 0.3rem; font-size: 0.8rem; color: #7f8494; }
     input, textarea {
       width: 100%;
       padding: 0.6rem 0.75rem;
-      background: #0d0a14;
-      border: 1px solid #3a2260;
+      background: #0f1117;
+      border: 1px solid #262a36;
       border-radius: 6px;
-      color: #e2dff0;
-      font-size: 0.95rem;
-      margin-bottom: 1rem;
+      color: #e1e4ed;
+      font-size: 0.9rem;
+      margin-bottom: 0.75rem;
     }
-    input:focus, textarea:focus { outline: none; border-color: #a855f7; box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.15); }
+    input:focus, textarea:focus { outline: none; border-color: #6366f1; }
     table { width: 100%; border-collapse: collapse; }
-    th, td { text-align: left; padding: 0.6rem 0.5rem; border-bottom: 1px solid #2d1b4e; }
-    th { color: #a78bfa; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; }
-    .badge {
-      display: inline-block;
-      padding: 0.2rem 0.6rem;
-      border-radius: 999px;
+    th, td { text-align: left; padding: 0.65rem 0.5rem; border-bottom: 1px solid #1e212b; }
+    th { color: #7f8494; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; }
+    .green { color: #22c55e; }
+    .red { color: #ef4444; }
+    .gold { color: #fbbf24; }
+    .silver { color: #9ca3af; }
+    .bronze { color: #d97706; }
+    .rank-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
       font-size: 0.75rem;
-      font-weight: 600;
+      font-weight: 700;
+      background: #1e212b;
+      color: #7f8494;
     }
-    .badge-green { background: #1a0e2e; color: #a78bfa; border: 1px solid #4a2d7a; }
-    .badge-red   { background: #2d0a1e; color: #f9a8d4; border: 1px solid #6b2144; }
-    .badge-yellow { background: #2d1a0e; color: #fcd34d; border: 1px solid #6b4421; }
-    a { color: #c084fc; }
-    a:hover { color: #d8b4fe; }
-    .balance-large { font-size: 2rem; font-weight: 700; background: linear-gradient(135deg, #c084fc, #e879f9); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-    .text-muted { color: #7c6a9e; }
+    a { color: #818cf8; }
+    a:hover { color: #a5b4fc; }
+    .stat-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem; }
+    .stat-box { text-align: center; padding: 0.75rem; }
+    .stat-box .label { font-size: 0.7rem; color: #7f8494; text-transform: uppercase; letter-spacing: 0.05em; }
+    .stat-box .value { font-size: 1.4rem; font-weight: 700; margin-top: 0.25rem; }
+    .text-muted { color: #7f8494; }
     .text-sm { font-size: 0.85rem; }
-    img.screenshot { max-width: 100%; border-radius: 6px; margin-top: 0.5rem; border: 1px solid #3a2260; }
+    img.screenshot { max-width: 100%; border-radius: 6px; margin-top: 0.5rem; border: 1px solid #262a36; }
     .mt-2 { margin-top: 1rem; }
     .flex { display: flex; }
     .flex-between { display: flex; justify-content: space-between; align-items: center; }
     .gap { gap: 0.75rem; }
-    ::selection { background: #7c3aed; color: #fff; }
+    .items-center { align-items: center; }
+    ::selection { background: #6366f1; color: #fff; }
+    h1 { font-size: 1.3rem; font-weight: 700; }
     @media (max-width: 600px) {
-      nav { flex-direction: column; gap: 0.5rem; }
+      nav { flex-direction: column; gap: 0.5rem; padding: 0.75rem 1rem; }
       nav div { display: flex; flex-wrap: wrap; justify-content: center; }
       nav a { margin: 0 0.5rem; }
+      .stat-grid { grid-template-columns: 1fr 1fr; }
     }
   </style>
 </head>
 <body>
   <nav>
     <div class="brand">
-      <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-        <rect x="2" y="2" width="24" height="24" rx="6" fill="#7c3aed"/>
-        <path d="M9 14h10M14 9v10" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
-        <circle cx="14" cy="14" r="10" stroke="#a78bfa" stroke-width="1" fill="none" opacity="0.5"/>
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <rect x="2" y="2" width="20" height="20" rx="5" fill="#6366f1"/>
+        <path d="M7 12h10M12 7v10" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
       </svg>
-      <span>Betting Club</span>
+      <span>betting club</span>
     </div>
     <div>
       {% if session.user_id %}
         <span class="text-muted text-sm">{{ session.username }}</span>
         <a href="{{ url_for('dashboard') }}">Dashboard</a>
-        <a href="{{ url_for('admin') }}">Players</a>
+        <a href="{{ url_for('leaderboard') }}">Leaderboard</a>
         <a href="{{ url_for('logout') }}">Logout</a>
       {% else %}
         <a href="{{ url_for('login') }}">Login</a>
