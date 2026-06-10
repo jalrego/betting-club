@@ -57,11 +57,11 @@
   <form method="POST" action="{{ url_for('new_bet') }}">
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 0.75rem;">
       <div>
-        <label for="match_info">⚽ Match</label>
+        <label for="match_info">Match</label>
         <input type="text" name="match_info" id="match_info" required placeholder="e.g. Portugal vs Brazil">
       </div>
       <div>
-        <label for="round">🔄 Round</label>
+        <label for="round">Round</label>
         <select name="round" id="round" required style="width:100%;padding:0.6rem 0.75rem;background:#0f1117;border:1px solid #262a36;border-radius:6px;color:#e1e4ed;font-size:0.9rem;margin-bottom:0.75rem;">
           <option value="">Select round</option>
           {% for r in rounds %}
@@ -70,19 +70,19 @@
         </select>
       </div>
       <div>
-        <label for="stake">💵 Stake (&euro;)</label>
+        <label for="stake">Stake (&euro;)</label>
         <input type="number" step="0.01" min="0.01" name="stake" id="stake" required placeholder="e.g. 5.00">
       </div>
       <div>
-        <label for="odds">📊 Odds</label>
+        <label for="odds">Odds</label>
         <input type="number" step="0.01" min="1.01" name="odds" id="odds" required placeholder="e.g. 2.10">
       </div>
     </div>
     <div>
-      <label for="pick">🎯 Your Pick</label>
+      <label for="pick">Your Pick</label>
       <input type="text" name="pick" id="pick" required placeholder="e.g. Brazil to win">
     </div>
-    <button type="submit" class="btn btn-primary">🚀 Place Bet</button>
+    <button type="submit" class="btn btn-primary">Place Bet</button>
   </form>
 </div>
 
@@ -92,11 +92,11 @@
   <table>
     <thead>
       <tr>
-        <th>⚽ Match</th>
-        <th>🔄 Round</th>
-        <th>💵 Stake</th>
-        <th>📊 Odds</th>
-        <th>🎯 Pick</th>
+        <th>Match</th>
+        <th>Round</th>
+        <th>Stake</th>
+        <th>Odds</th>
+        <th>Pick</th>
         <th>Result</th>
         <th></th>
       </tr>
@@ -123,12 +123,12 @@
         <td>
           {% if bet.result == 'pending' %}
           <form method="POST" action="{{ url_for('settle_bet', bet_id=bet.id) }}" style="display:inline">
-            <button name="result" value="won" class="btn btn-secondary" style="padding:0.2rem 0.5rem;font-size:0.7rem;">✅ Won</button>
-            <button name="result" value="lost" class="btn btn-secondary" style="padding:0.2rem 0.5rem;font-size:0.7rem;">❌ Lost</button>
+            <button name="result" value="won" class="btn btn-secondary" style="padding:0.2rem 0.5rem;font-size:0.7rem;">Won</button>
+            <button name="result" value="lost" class="btn btn-secondary" style="padding:0.2rem 0.5rem;font-size:0.7rem;">Lost</button>
           </form>
           {% endif %}
           <form method="POST" action="{{ url_for('delete_bet', bet_id=bet.id) }}" style="display:inline" onsubmit="return confirm('Delete this bet?')">
-            <button class="btn btn-secondary" style="padding:0.2rem 0.5rem;font-size:0.7rem;">🗑️</button>
+            <button class="btn btn-secondary" style="padding:0.2rem 0.5rem;font-size:0.7rem;">&times;</button>
           </form>
         </td>
       </tr>
@@ -138,7 +138,7 @@
 </div>
 {% else %}
 <div class="card">
-  <p class="text-muted">📭 No bets yet. Place your first bet above! 🚀</p>
+  <p class="text-muted">No bets yet. Place your first bet above!</p>
 </div>
 {% endif %}
 

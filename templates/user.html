@@ -3,7 +3,7 @@
 
 <div class="flex-between" style="margin-bottom: 1.5rem;">
   <h1>👤 {{ profile_user.username }}</h1>
-  <a href="{{ url_for('leaderboard') }}" class="btn btn-secondary">🏆 Leaderboard</a>
+  <a href="{{ url_for('leaderboard') }}" class="btn btn-secondary">&larr; Leaderboard</a>
 </div>
 
 <div class="stat-grid" style="margin-bottom: 1rem;">
@@ -38,11 +38,11 @@
   <table>
     <thead>
       <tr>
-        <th>⚽ Match</th>
-        <th>🔄 Round</th>
-        <th>💵 Stake</th>
-        <th>📊 Odds</th>
-        <th>🎯 Pick</th>
+        <th>Match</th>
+        <th>Round</th>
+        <th>Stake</th>
+        <th>Odds</th>
+        <th>Pick</th>
         <th>Result</th>
       </tr>
     </thead>
@@ -72,7 +72,7 @@
 </div>
 {% else %}
 <div class="card">
-  <p class="text-muted">📭 No bets yet.</p>
+  <p class="text-muted">No bets yet.</p>
 </div>
 {% endif %}
 
