@@ -231,6 +231,28 @@ def index():
     return redirect(url_for('login'))
 
 
+@app.route('/debug-env')
+def debug_env():
+    import psycopg2
+    su = os.environ.get('SUPABASE_URL', 'NOT SET')
+    du = os.environ.get('DATABASE_URL', 'NOT SET')
+    using = su if su != 'NOT SET' else du
+    masked = using[:30] + '...' + using[-10:] if using not in ('NOT SET', '') else using
+    # Try connecting and counting tables
+    try:
+        conn = psycopg2.connect(using, sslmode='require')
+        cur = conn.cursor()
+        cur.execute("SELECT count(*) FROM information_schema.tables WHERE table_schema='public'")
+        tbl = cur.fetchone()[0]
+        conn.close()
+        return (f"SUPABASE_URL: {masked}<br>"
+                f"DATABASE_URL: {'SET' if du != 'NOT SET' else 'NOT SET'}<br>"
+                f"Using: {using[:8]}...<br>"
+                f"Tables in public: {tbl}")
+    except Exception as e:
+        return f"SUPABASE_URL: {masked}<br>Connection error: {e}"
+
+
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
