@@ -5,4 +5,5 @@ static/uploads/*
 !static/uploads/.gitkeep
 .env
 *.pyc
+.DS_Store
 
