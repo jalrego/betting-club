@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="flex-between" style="margin-bottom: 1rem;">
+  <h1>Dashboard</h1>
+  <span class="text-muted text-sm">Initial deposit: €{{ "%.2f"|format(starting) }}</span>
+</div>
+
+<div class="card">
+  <h2>Record Balance</h2>
+  <form method="POST" action="{{ url_for('upload') }}" enctype="multipart/form-data">
+    <label for="balance">Current Balance (€)</label>
+    <input type="number" step="0.01" name="balance" id="balance" required placeholder="e.g. 12.50">
+
+    <label for="screenshot">Screenshot (optional)</label>
+    <input type="file" name="screenshot" id="screenshot" accept="image/png,image/jpeg,image/gif,image/webp">
+
+    <label for="notes">Notes (optional)</label>
+    <input type="text" name="notes" id="notes" placeholder="e.g. After matchday 3">
+
+    <button type="submit" class="btn btn-primary">Save</button>
+  </form>
+</div>
+
+{% if latest %}
+<div class="card">
+  <div class="flex-between">
+    <h2>Latest Balance</h2>
+    <div class="balance-large">€{{ "%.2f"|format(latest.balance) }}</div>
+  </div>
+  {% if latest.notes %}
+    <p class="text-muted text-sm">{{ latest.notes }}</p>
+  {% endif %}
+  <p class="text-muted text-sm">{{ latest.created_at }}</p>
+  {% if latest.screenshot %}
+    <a href="{{ url_for('uploaded_file', filename=latest.screenshot) }}" target="_blank">
+      <img src="{{ url_for('uploaded_file', filename=latest.screenshot) }}" alt="Screenshot" class="screenshot">
+    </a>
+  {% endif %}
+</div>
+{% endif %}
+
+{% if records %}
+<div class="card">
+  <h2>History</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Balance</th>
+        <th>Change</th>
+        <th>Notes</th>
+        <th>Screenshot</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for record in records %}
+      <tr>
+        <td class="text-sm">{{ record.created_at }}</td>
+        <td><strong>€{{ "%.2f"|format(record.balance) }}</strong></td>
+        <td>
+          {% if loop.last %}
+            <span class="badge badge-green">Initial</span>
+          {% else %}
+            {% set diff = record.balance - records[loop.index0 + 1].balance %}
+            {% if diff > 0 %}
+              <span class="badge badge-green">+€{{ "%.2f"|format(diff) }}</span>
+            {% elif diff < 0 %}
+              <span class="badge badge-red">-€{{ "%.2f"|format(-diff) }}</span>
+            {% else %}
+              <span class="badge badge-yellow">€0.00</span>
+            {% endif %}
+          {% endif %}
+        </td>
+        <td class="text-sm text-muted">{{ record.notes or '' }}</td>
+        <td>
+          {% if record.screenshot %}
+            <a href="{{ url_for('uploaded_file', filename=record.screenshot) }}" target="_blank">View</a>
+          {% else %}
+            <span class="text-muted">—</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="card">
+  <p class="text-muted">No records yet. Add your first balance entry above!</p>
+</div>
+{% endif %}
+
+{% endblock %}

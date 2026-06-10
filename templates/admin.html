@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h1 style="margin-bottom: 1rem;">All Players</h1>
+
+<div class="card">
+  <table>
+    <thead>
+      <tr>
+        <th>Player</th>
+        <th>Latest Balance</th>
+        <th>vs Initial (€10)</th>
+        <th>Updates</th>
+        <th>Last Updated</th>
+        <th>Joined</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for player in players %}
+      <tr>
+        <td><strong>{{ player.username }}</strong></td>
+        <td>
+          {% if player.latest_balance is not none %}
+            €{{ "%.2f"|format(player.latest_balance) }}
+          {% else %}
+            <span class="text-muted">—</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if player.latest_balance is not none %}
+            {% set diff = player.latest_balance - starting %}
+            {% if diff > 0 %}
+              <span class="badge badge-green">+€{{ "%.2f"|format(diff) }}</span>
+            {% elif diff < 0 %}
+              <span class="badge badge-red">-€{{ "%.2f"|format(-diff) }}</span>
+            {% else %}
+              <span class="badge badge-yellow">€0.00</span>
+            {% endif %}
+          {% else %}
+            <span class="text-muted">—</span>
+          {% endif %}
+        </td>
+        <td>{{ player.updates }}</td>
+        <td class="text-sm">{{ player.last_updated or '—' }}</td>
+        <td class="text-sm">{{ player.joined_at }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% endblock %}

@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card" style="max-width: 400px; margin: 0 auto;">
+  <h2>Create Account</h2>
+  <p class="text-muted text-sm">Each player starts with a €10.00 balance.</p>
+  <form method="POST">
+    <label for="username">Username</label>
+    <input type="text" name="username" id="username" required autocomplete="username">
+
+    <label for="password">Password</label>
+    <input type="password" name="password" id="password" required autocomplete="new-password">
+
+    <label for="confirm_password">Confirm Password</label>
+    <input type="password" name="confirm_password" id="confirm_password" required autocomplete="new-password">
+
+    <button type="submit" class="btn btn-primary" style="width:100%">Register</button>
+  </form>
+  <p class="text-muted text-sm mt-2">
+    Already have an account? <a href="{{ url_for('login') }}">Log in</a>.
+  </p>
+</div>
+{% endblock %}
