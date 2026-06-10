@@ -520,6 +520,7 @@ def leaderboard():
             bal = user_balance(u['id'])
             stats = user_bet_stats(u['id'])
             players.append({
+                'id': u['id'],
                 'username': u['username'],
                 'latest_balance': bal / 100.0,
                 'updates': stats['total'],
@@ -533,6 +534,36 @@ def leaderboard():
         raise
 
     return render_template('admin.html', players=players, starting=STARTING_BALANCE / 100.0)
+
+
+@app.route('/user/<int:user_id>')
+@login_required
+def user_profile(user_id):
+    db = get_db()
+
+    user = db.execute(
+        f'SELECT * FROM users WHERE id = {p()}',
+        (user_id,)
+    ).fetchone()
+
+    if not user:
+        flash('User not found.', 'danger')
+        return redirect(url_for('leaderboard'))
+
+    try:
+        balance = user_balance(user_id)
+        bets = user_bets(user_id)
+        stats = user_bet_stats(user_id)
+    except Exception as e:
+        logging.error(f"user_profile error: {e}")
+        raise
+
+    return render_template('user.html',
+                           profile_user=dict(user),
+                           balance=balance / 100.0,
+                           bets=bets,
+                           stats=stats,
+                           starting=STARTING_BALANCE / 100.0)
 
 
 if __name__ == '__main__':

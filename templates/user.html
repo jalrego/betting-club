@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="flex-between" style="margin-bottom: 1.5rem;">
+  <h1>{{ profile_user.username }}</h1>
+  <a href="{{ url_for('leaderboard') }}" class="btn btn-secondary">&larr; Leaderboard</a>
+</div>
+
+<div class="stat-grid" style="margin-bottom: 1rem;">
+  <div class="card stat-box">
+    <div class="label">Balance</div>
+    <div class="value">{{ "%.2f"|format(balance) }}</div>
+    <div class="label" style="margin-top: 0.25rem;">&euro;</div>
+  </div>
+  <div class="card stat-box">
+    <div class="label">Profit / Loss</div>
+    {% set pl = balance - starting %}
+    {% if pl > 0 %}
+      <div class="value green">+{{ "%.2f"|format(pl) }}</div>
+      <div class="label green" style="margin-top: 0.25rem;">&uarr; up</div>
+    {% elif pl < 0 %}
+      <div class="value red">{{ "%.2f"|format(pl) }}</div>
+      <div class="label red" style="margin-top: 0.25rem;">&darr; down</div>
+    {% else %}
+      <div class="value">0.00</div>
+      <div class="label" style="margin-top: 0.25rem;">even</div>
+    {% endif %}
+  </div>
+  <div class="card stat-box">
+    <div class="label">Bets / Win Rate</div>
+    <div class="value">{{ stats.total }} / {{ stats.win_rate }}%</div>
+  </div>
+</div>
+
+{% if bets %}
+<div class="card" style="padding: 0; overflow: hidden;">
+  <h2 style="padding: 1rem 1rem 0 1rem;">Bets</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Match</th>
+        <th>Round</th>
+        <th>Stake</th>
+        <th>Odds</th>
+        <th>Pick</th>
+        <th>Result</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for bet in bets %}
+      <tr>
+        <td><strong>{{ bet.match_info }}</strong></td>
+        <td class="text-sm text-muted">{{ bet.round }}</td>
+        <td>&euro;{{ "%.2f"|format(bet.stake) }}</td>
+        <td>{{ "%.2f"|format(bet.odds) }}</td>
+        <td class="text-sm">{{ bet.pick }}</td>
+        <td>
+          {% if bet.result == 'pending' %}
+            <span class="text-muted">&#9711; Pending</span>
+          {% elif bet.result == 'won' %}
+            <span class="green">&#9679; Won</span>
+          {% elif bet.result == 'lost' %}
+            <span class="red">&#9679; Lost</span>
+          {% elif bet.result == 'cashout' %}
+            <span class="gold">&#9679; Cashed</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="card">
+  <p class="text-muted">No bets yet.</p>
+</div>
+{% endif %}
+
+<div class="card">
+  <h2>Joined</h2>
+  <p class="text-muted text-sm">{{ profile_user.created_at }}</p>
+</div>
+
+{% endblock %}

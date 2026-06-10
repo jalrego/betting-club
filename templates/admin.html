@@ -31,7 +31,7 @@
             <span class="rank-num">{{ loop.index }}</span>
           {% endif %}
         </td>
-        <td><strong>{{ player.username }}</strong></td>
+        <td><a href="{{ url_for('user_profile', user_id=player.id) }}"><strong>{{ player.username }}</strong></a></td>
         <td>
           {% if player.latest_balance is not none %}
             &euro;{{ "%.2f"|format(player.latest_balance) }}
