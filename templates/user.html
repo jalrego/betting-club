@@ -8,26 +8,26 @@
 
 <div class="stat-grid" style="margin-bottom: 1rem;">
   <div class="card stat-box">
-    <div class="label">💰 Balance</div>
+    <div class="label">Balance</div>
     <div class="value">{{ "%.2f"|format(balance) }}</div>
     <div class="label" style="margin-top: 0.25rem;">&euro;</div>
   </div>
   <div class="card stat-box">
-    <div class="label">📈 Profit / Loss</div>
+    <div class="label">Profit / Loss</div>
     {% set pl = balance - starting %}
     {% if pl > 0 %}
       <div class="value green">+{{ "%.2f"|format(pl) }}</div>
-      <div class="label green" style="margin-top: 0.25rem;">🟢 up</div>
+      <div class="label green" style="margin-top: 0.25rem;">up</div>
     {% elif pl < 0 %}
       <div class="value red">{{ "%.2f"|format(pl) }}</div>
-      <div class="label red" style="margin-top: 0.25rem;">🔴 down</div>
+      <div class="label red" style="margin-top: 0.25rem;">down</div>
     {% else %}
       <div class="value">0.00</div>
-      <div class="label" style="margin-top: 0.25rem;">⚪ even</div>
+      <div class="label" style="margin-top: 0.25rem;">even</div>
     {% endif %}
   </div>
   <div class="card stat-box">
-    <div class="label">🎲 Bets / 🎯 Win Rate</div>
+    <div class="label">Bets / Win Rate</div>
     <div class="value">{{ stats.total }} / {{ stats.win_rate }}%</div>
   </div>
 </div>
