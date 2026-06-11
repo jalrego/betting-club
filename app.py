@@ -500,14 +500,15 @@ def seed_test_users():
         ('player3', 'test'),
     ]
     for username, pw in rows:
+        pw_hash = generate_password_hash(pw)
         existing = query(f'SELECT id FROM users WHERE username = {p()}', (username,)).fetchone()
         if existing:
-            continue
-        pw_hash = generate_password_hash(pw, method='pbkdf2:sha256')
-        if is_pg():
-            query("INSERT INTO users (username, password_hash) VALUES (%s, %s)", (username, pw_hash))
+            query(f'UPDATE users SET password_hash = {p()} WHERE username = {p()}', (pw_hash, username))
         else:
-            query("INSERT INTO users (username, password_hash) VALUES (?, ?)", (username, pw_hash))
+            if is_pg():
+                query("INSERT INTO users (username, password_hash) VALUES (%s, %s)", (username, pw_hash))
+            else:
+                query("INSERT INTO users (username, password_hash) VALUES (?, ?)", (username, pw_hash))
 
 
 def user_bet_stats(user_id):
@@ -621,7 +622,7 @@ def register():
             flash('Username already taken.', 'danger')
             return render_template('register.html')
 
-        pw_hash = generate_password_hash(password, method='pbkdf2:sha256')
+        pw_hash = generate_password_hash(password)
         query(
             f'INSERT INTO users (username, password_hash) VALUES ({p()}, {p()})',
             (username, pw_hash)
