@@ -117,13 +117,13 @@
     </label>
   </div>
 
-  <form method="POST" action="{{ url_for('new_bet') }}" id="betForm" data-balance="{{ balance }}">
+  <form method="POST" action="{{ url_for('new_bet') }}" id="betForm" data-balance="{{ balance }}" novalidate>
     <input type="hidden" name="bet_type" id="betTypeInput" value="single">
 
     <div id="singleFields">
       <div style="position:relative;margin-bottom:0.75rem;">
         <input type="text" id="matchSearch" class="input" placeholder="Search team or date..." autocomplete="off" oninput="filterMatches()" onfocus="filterMatches()" onblur="setTimeout(function(){document.getElementById('matchDropdown').style.display='none'},200)">
-        <select name="match_number" id="match_number" required style="display:none;">
+        <select name="match_number" id="match_number" style="display:none;">
           <option value="">Select match</option>
           {% for f in fixtures %}
           <option value="{{ f.match_number }}" data-round="{{ f.round }}" data-home="{{ f.home_team }}" data-away="{{ f.away_team }}" data-date="{{ f.date }}" data-flag="{{ team_flag(f.home_team) }} {{ team_flag(f.away_team) }}">
