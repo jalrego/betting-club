@@ -635,7 +635,8 @@ def new_bet():
         matches = request.form.getlist('multi_match[]')
         picks = request.form.getlist('multi_pick[]')
         match_numbers = request.form.getlist('multi_match_number[]')
-        if not matches or not picks or not round_ or not stake_str or not odds_str:
+        round_ = 'Multi'
+        if not matches or not picks or not stake_str or not odds_str:
             flash('All bet fields are required.', 'danger')
             return redirect(url_for('dashboard'))
         selections = [{"match": m.strip(), "pick": p.strip()} for m, p in zip(matches, picks) if m.strip() and p.strip()]

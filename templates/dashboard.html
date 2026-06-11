@@ -156,15 +156,6 @@
     <div id="multiFields" style="display: none;">
       <div class="form-grid">
         <div>
-          <label for="round_multi">Round</label>
-          <select name="round" id="round_multi" required class="input">
-            <option value="">Select round</option>
-            {% for r in rounds %}
-              <option value="{{ r }}">{{ r }}</option>
-            {% endfor %}
-          </select>
-        </div>
-        <div>
           <label for="stake_multi">Stake (&euro;)</label>
           <input type="number" step="0.01" min="0.01" name="stake" id="stake_multi" required placeholder="e.g. 5.00">
         </div>
