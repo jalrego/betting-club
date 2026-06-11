@@ -894,6 +894,100 @@ def delete_bet(bet_id):
     return redirect(url_for('dashboard'))
 
 
+@app.route('/bet/<int:bet_id>/edit', methods=['POST'])
+@login_required
+def edit_bet(bet_id):
+    db = get_db()
+    bet = query(f'SELECT * FROM bets WHERE id = {p()}', (bet_id,)).fetchone()
+    if not bet:
+        flash('Bet not found.', 'danger')
+        return redirect(url_for('dashboard'))
+
+    # only owner or admin can edit
+    is_admin = False
+    user = query(f'SELECT username FROM users WHERE id = {p()}', (session['user_id'],)).fetchone()
+    if user and user['username'] == 'Joao':
+        is_admin = True
+    if bet['user_id'] != session['user_id'] and not is_admin:
+        flash('You can only edit your own bets.', 'danger')
+        return redirect(url_for('dashboard'))
+
+    if bet['result'] != 'pending':
+        flash('Only pending bets can be edited.', 'danger')
+        return redirect(url_for('dashboard'))
+
+    match_info = request.form.get('match_info', '').strip()
+    pick = request.form.get('pick', '').strip()
+    match_number = request.form.get('match_number', type=int)
+    stake_str = request.form.get('stake', '').strip()
+    odds_str = request.form.get('odds', '').strip()
+
+    if not all([match_info, pick, stake_str, odds_str]):
+        flash('All fields are required.', 'danger')
+        return redirect(url_for('dashboard'))
+
+    try:
+        stake_str = stake_str.replace(',', '.')
+        stake_raw = float(stake_str)
+        if stake_raw <= 0:
+            raise ValueError
+        if '.' in stake_str and len(stake_str.split('.')[1]) > 2:
+            flash('Stake must have at most 2 decimal places.', 'danger')
+            return redirect(url_for('dashboard'))
+        new_stake_cents = round(stake_raw * 100)
+        odds_str = odds_str.replace(',', '.')
+        odds = float(odds_str)
+        if '.' in odds_str and len(odds_str.split('.')[1]) > 2:
+            flash('Odds must have at most 2 decimal places.', 'danger')
+            return redirect(url_for('dashboard'))
+    except ValueError:
+        flash('Stake and odds must be valid positive numbers.', 'danger')
+        return redirect(url_for('dashboard'))
+
+    if new_stake_cents < 1:
+        flash('Stake must be at least €0.01.', 'danger')
+        return redirect(url_for('dashboard'))
+
+    if odds <= 1:
+        flash('Odds must be greater than 1.00.', 'danger')
+        return redirect(url_for('dashboard'))
+
+    # check balance delta
+    old_stake_cents = bet['stake']
+    extra_needed = new_stake_cents - old_stake_cents
+    if extra_needed > 0:
+        bal = user_balance(bet['user_id'])
+        if bal < extra_needed:
+            flash(f'Insufficient balance. Need €{extra_needed/100:.2f} more, have €{bal/100:.2f}.', 'danger')
+            return redirect(url_for('dashboard'))
+
+    # look up round from the selected fixture
+    round_ = ''
+    if match_number:
+        row = query(f'SELECT round FROM fixtures WHERE match_number = {p()}', (match_number,)).fetchone()
+        round_ = row['round'] if row else ''
+
+    query(
+        f'UPDATE bets SET match_info = {p()}, pick = {p()}, match_number = {p()}, stake = {p()}, odds = {p()}, round = {p()} WHERE id = {p()}',
+        (match_info, pick, match_number, new_stake_cents, odds, round_, bet_id)
+    )
+    db.commit()
+
+    # record balance change
+    try:
+        bal = user_balance(bet['user_id'])
+        query(
+            f'INSERT INTO balance_records (user_id, balance, notes) VALUES ({p()}, {p()}, {p()})',
+            (bet['user_id'], bal, f"Bet edited: {match_info}")
+        )
+        db.commit()
+    except Exception:
+        db.rollback()
+
+    flash('Bet updated!', 'success')
+    return redirect(url_for('dashboard'))
+
+
 @app.route('/admin', methods=['GET', 'POST'])
 @login_required
 @admin_required

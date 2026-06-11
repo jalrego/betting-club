@@ -47,7 +47,7 @@
   </div>
   <div class="card stat-box" style="padding:0.5rem 0.25rem;border-top-color:transparent;">
     <div class="label">Lost</div>
-    <div class="value red" style="font-size:1rem;">{{ stats.total - stats.won }}</div>
+    <div class="value red" style="font-size:1rem;">{{ stats.lost }}</div>
   </div>
   <div class="card stat-box" style="padding:0.5rem 0.25rem;border-top-color:transparent;">
     <div class="label">Win Rate</div>
@@ -222,6 +222,43 @@
   </div>
 </div>
 
+<div id="editModal" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,0.6);align-items:center;justify-content:center;">
+  <div style="background:#13161e;border:1px solid #262a36;border-radius:12px;padding:1.5rem;max-width:460px;width:90%;margin:auto;">
+    <h3 style="margin:0 0 1rem;">Edit Bet</h3>
+    <form method="POST" id="editForm">
+      <input type="hidden" name="bet_id" id="editBetId">
+      <div style="margin-bottom:0.75rem;">
+        <label>Match</label>
+        <select name="match_number" id="editMatchSelect" class="input" required>
+          <option value="">Select match...</option>
+          {% for f in fixtures %}
+          <option value="{{ f.match_number }}" data-home="{{ f.home_team }}" data-away="{{ f.away_team }}" data-round="{{ f.round }}" data-date="{{ f.date }}" data-flag="{{ team_flag(f.home_team) }}">{{ team_flag(f.home_team) }} {{ f.home_team }} vs {{ f.away_team }} ({{ f.round }})</option>
+          {% endfor %}
+        </select>
+        <input type="hidden" name="match_info" id="editMatchInfo">
+      </div>
+      <div style="margin-bottom:0.75rem;">
+        <label>Your Pick</label>
+        <input type="text" name="pick" id="editPick" class="input" required placeholder="e.g. Brazil to win">
+      </div>
+      <div style="display:flex;gap:0.75rem;margin-bottom:0.75rem;">
+        <div style="flex:1;">
+          <label>Stake (&euro;)</label>
+          <input type="number" step="0.01" min="0.01" name="stake" id="editStake" class="input" required>
+        </div>
+        <div style="flex:1;">
+          <label>Odds</label>
+          <input type="number" step="0.01" min="1.01" name="odds" id="editOdds" class="input" required>
+        </div>
+      </div>
+      <div style="display:flex;gap:0.75rem;margin-top:1.25rem;justify-content:flex-end;">
+        <button type="button" onclick="closeEditModal()" class="btn btn-secondary">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 {% if bets %}
 <div class="card" style="padding: 0;">
   <div style="display:flex;align-items:center;justify-content:space-between;padding:1rem 1rem 0 1rem;">
@@ -289,6 +326,13 @@
         </td>
         <td onclick="event.stopPropagation()">
           {% if bet.result == 'pending' %}
+          <button class="btn btn-secondary btn-sm" onclick="openEditModal(this)"
+            data-id="{{ bet.id }}"
+            data-match="{{ bet.match_info }}"
+            data-pick="{{ bet.pick }}"
+            data-stake="{{ bet.stake }}"
+            data-odds="{{ bet.odds }}"
+            data-match-number="{{ bet.match_number or '' }}">Edit</button>
           <form method="POST" action="{{ url_for('settle_bet', bet_id=bet.id) }}" style="display:inline">
             <button name="result" value="won" class="btn btn-secondary btn-sm">Won</button>
             <button name="result" value="lost" class="btn btn-secondary btn-sm">Lost</button>
@@ -312,7 +356,7 @@
             {% if bet.result == 'pending' and fs %}
               {% set fs_status = fs.status %}
               {% if fs.home_score is not none and fs_status == 'completed' %}
-                <span class="badge badge-lost">Settled</span>
+                <span class="badge badge-pending">Settled</span>
               {% elif fs_status == 'live' %}
                 <span class="badge badge-pending">LIVE</span>
               {% else %}
@@ -489,6 +533,34 @@ function showConfirm(event) {
 function closeConfirm() {
   document.getElementById('confirmModal').style.display = 'none';
 }
+function openEditModal(btn) {
+  var id = btn.getAttribute('data-id');
+  var match = btn.getAttribute('data-match');
+  var pick = btn.getAttribute('data-pick');
+  var stake = btn.getAttribute('data-stake');
+  var odds = btn.getAttribute('data-odds');
+  var matchNumber = btn.getAttribute('data-match-number');
+  document.getElementById('editBetId').value = id;
+  document.getElementById('editForm').action = '/bet/' + id + '/edit';
+  document.getElementById('editMatchSelect').value = matchNumber || '';
+  document.getElementById('editMatchInfo').value = match;
+  document.getElementById('editPick').value = pick;
+  document.getElementById('editStake').value = stake;
+  document.getElementById('editOdds').value = odds;
+  document.getElementById('editModal').style.display = 'flex';
+}
+function closeEditModal() {
+  document.getElementById('editModal').style.display = 'none';
+}
+// sync match_info when selection changes
+document.addEventListener('change', function(e) {
+  if (e.target && e.target.id === 'editMatchSelect') {
+    var opt = e.target.options[e.target.selectedIndex];
+    if (opt && opt.value) {
+      document.getElementById('editMatchInfo').value = (opt.getAttribute('data-home') || '') + ' vs ' + (opt.getAttribute('data-away') || '');
+    }
+  }
+});
 
 document.addEventListener('DOMContentLoaded', function() {
   var bal = getBalance();
