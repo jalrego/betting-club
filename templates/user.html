@@ -33,11 +33,13 @@
 </div>
 
 {% if bets %}
-<div class="card" style="padding: 0; overflow: hidden;">
+<div class="card" style="padding: 0;">
   <h2 style="padding: 1rem 1rem 0 1rem;">📋 Bets</h2>
+  <div class="table-wrap">
   <table>
     <thead>
       <tr>
+        <th>Type</th>
         <th>Match</th>
         <th>Round</th>
         <th>Stake</th>
@@ -49,7 +51,28 @@
     <tbody>
       {% for bet in bets %}
       <tr>
-        <td><strong>{{ bet.match_info }}</strong></td>
+        <td>
+          {% if bet.bet_type == 'multi' %}
+            <span class="gold" style="font-size:0.7rem;font-weight:600;">MULTI</span>
+          {% else %}
+            <span class="text-muted" style="font-size:0.7rem;">SINGLE</span>
+          {% endif %}
+        </td>
+        <td>
+          <strong>{{ bet.match_info }}</strong>
+          {% if bet.selections %}
+            <details style="margin-top: 0.25rem;">
+              <summary class="text-muted text-sm" style="cursor:pointer;font-size:0.7rem;">{{ bet.selections|length }} legs</summary>
+              <div style="margin-top: 0.25rem; padding-left: 0.5rem; border-left: 2px solid #262a36;">
+                {% for leg in bet.selections %}
+                  <div class="text-sm" style="font-size:0.75rem;margin-bottom:0.2rem;">
+                    <span class="text-muted">{{ leg.match }}</span> → {{ leg.pick }}
+                  </div>
+                {% endfor %}
+              </div>
+            </details>
+          {% endif %}
+        </td>
         <td class="text-sm text-muted">{{ bet.round }}</td>
         <td>&euro;{{ "%.2f"|format(bet.stake) }}</td>
         <td>{{ "%.2f"|format(bet.odds) }}</td>
@@ -69,6 +92,7 @@
       {% endfor %}
     </tbody>
   </table>
+  </div>
 </div>
 {% else %}
 <div class="card">

@@ -54,44 +54,98 @@
 
 <div class="card">
   <h2>🎯 Place a Bet</h2>
-  <form method="POST" action="{{ url_for('new_bet') }}">
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 0.75rem;">
-      <div>
-        <label for="match_info">Match</label>
-        <input type="text" name="match_info" id="match_info" required placeholder="e.g. Portugal vs Brazil">
+
+  <div class="toggle-row">
+    <label>
+      <input type="radio" name="bet_type_switch" value="single" checked onchange="toggleBetType()"> Single
+    </label>
+    <label>
+      <input type="radio" name="bet_type_switch" value="multi" onchange="toggleBetType()"> Multi
+    </label>
+  </div>
+
+  <form method="POST" action="{{ url_for('new_bet') }}" id="betForm">
+    <input type="hidden" name="bet_type" id="betTypeInput" value="single">
+
+    <div id="singleFields">
+      <div class="form-grid">
+        <div>
+          <label for="match_info">Match</label>
+          <input type="text" name="match_info" id="match_info" placeholder="e.g. Portugal vs Brazil">
+        </div>
+        <div>
+          <label for="round">Round</label>
+          <select name="round" id="round" required class="input">
+            <option value="">Select round</option>
+            {% for r in rounds %}
+              <option value="{{ r }}">{{ r }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label for="stake">Stake (&euro;)</label>
+          <input type="number" step="0.01" min="0.01" name="stake" id="stake" required placeholder="e.g. 5.00">
+        </div>
+        <div>
+          <label for="odds">Odds</label>
+          <input type="number" step="0.01" min="1.01" name="odds" id="odds" required placeholder="e.g. 2.10">
+        </div>
       </div>
       <div>
-        <label for="round">Round</label>
-        <select name="round" id="round" required style="width:100%;padding:0.6rem 0.75rem;background:#0f1117;border:1px solid #262a36;border-radius:6px;color:#e1e4ed;font-size:0.9rem;margin-bottom:0.75rem;">
-          <option value="">Select round</option>
-          {% for r in rounds %}
-            <option value="{{ r }}">{{ r }}</option>
-          {% endfor %}
-        </select>
-      </div>
-      <div>
-        <label for="stake">Stake (&euro;)</label>
-        <input type="number" step="0.01" min="0.01" name="stake" id="stake" required placeholder="e.g. 5.00">
-      </div>
-      <div>
-        <label for="odds">Odds</label>
-        <input type="number" step="0.01" min="1.01" name="odds" id="odds" required placeholder="e.g. 2.10">
+        <label for="pick">Your Pick</label>
+        <input type="text" name="pick" id="pick" placeholder="e.g. Brazil to win">
       </div>
     </div>
-    <div>
-      <label for="pick">Your Pick</label>
-      <input type="text" name="pick" id="pick" required placeholder="e.g. Brazil to win">
+
+    <div id="multiFields" style="display: none;">
+      <div class="form-grid">
+        <div>
+          <label for="round_multi">Round</label>
+          <select name="round" id="round_multi" required class="input">
+            <option value="">Select round</option>
+            {% for r in rounds %}
+              <option value="{{ r }}">{{ r }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label for="stake_multi">Stake (&euro;)</label>
+          <input type="number" step="0.01" min="0.01" name="stake" id="stake_multi" required placeholder="e.g. 5.00">
+        </div>
+        <div>
+          <label for="odds_multi">Combined Odds</label>
+          <input type="number" step="0.01" min="1.01" name="odds" id="odds_multi" required placeholder="e.g. 5.50">
+        </div>
+      </div>
+
+      <label style="margin-bottom: 0.5rem;">Selections</label>
+      <div id="multiLegs">
+        <div class="multi-leg">
+          <input type="text" name="multi_match[]" placeholder="Match">
+          <input type="text" name="multi_pick[]" placeholder="Pick">
+          <button type="button" onclick="removeLeg(this)" class="btn btn-secondary btn-sm">&times;</button>
+        </div>
+        <div class="multi-leg">
+          <input type="text" name="multi_match[]" placeholder="Match">
+          <input type="text" name="multi_pick[]" placeholder="Pick">
+          <button type="button" onclick="removeLeg(this)" class="btn btn-secondary btn-sm">&times;</button>
+        </div>
+      </div>
+      <button type="button" onclick="addLeg()" class="btn btn-secondary" style="margin-top: 0.25rem;">+ Add Selection</button>
     </div>
-    <button type="submit" class="btn btn-primary">Place Bet</button>
+
+    <button type="submit" class="btn btn-primary" style="margin-top: 0.75rem;">Place Bet</button>
   </form>
 </div>
 
 {% if bets %}
-<div class="card" style="padding: 0; overflow: hidden;">
+<div class="card" style="padding: 0;">
   <h2 style="padding: 1rem 1rem 0 1rem;">📋 My Bets</h2>
+  <div class="table-wrap">
   <table>
     <thead>
       <tr>
+        <th>Type</th>
         <th>Match</th>
         <th>Round</th>
         <th>Stake</th>
@@ -104,7 +158,28 @@
     <tbody>
       {% for bet in bets %}
       <tr>
-        <td><strong>{{ bet.match_info }}</strong></td>
+        <td>
+          {% if bet.bet_type == 'multi' %}
+            <span class="gold" style="font-size:0.7rem;font-weight:600;">MULTI</span>
+          {% else %}
+            <span class="text-muted" style="font-size:0.7rem;">SINGLE</span>
+          {% endif %}
+        </td>
+        <td>
+          <strong>{{ bet.match_info }}</strong>
+          {% if bet.selections %}
+            <details style="margin-top: 0.25rem;">
+              <summary class="text-muted text-sm" style="cursor:pointer;font-size:0.7rem;">{{ bet.selections|length }} legs</summary>
+              <div style="margin-top: 0.25rem; padding-left: 0.5rem; border-left: 2px solid #262a36;">
+                {% for leg in bet.selections %}
+                  <div class="text-sm" style="font-size:0.75rem;margin-bottom:0.2rem;">
+                    <span class="text-muted">{{ leg.match }}</span> → {{ leg.pick }}
+                  </div>
+                {% endfor %}
+              </div>
+            </details>
+          {% endif %}
+        </td>
         <td class="text-sm text-muted">{{ bet.round }}</td>
         <td>&euro;{{ "%.2f"|format(bet.stake) }}</td>
         <td>{{ "%.2f"|format(bet.odds) }}</td>
@@ -123,18 +198,19 @@
         <td>
           {% if bet.result == 'pending' %}
           <form method="POST" action="{{ url_for('settle_bet', bet_id=bet.id) }}" style="display:inline">
-            <button name="result" value="won" class="btn btn-secondary" style="padding:0.2rem 0.5rem;font-size:0.7rem;">Won</button>
-            <button name="result" value="lost" class="btn btn-secondary" style="padding:0.2rem 0.5rem;font-size:0.7rem;">Lost</button>
+            <button name="result" value="won" class="btn btn-secondary btn-sm">Won</button>
+            <button name="result" value="lost" class="btn btn-secondary btn-sm">Lost</button>
           </form>
           {% endif %}
           <form method="POST" action="{{ url_for('delete_bet', bet_id=bet.id) }}" style="display:inline" onsubmit="return confirm('Delete this bet?')">
-            <button class="btn btn-secondary" style="padding:0.2rem 0.5rem;font-size:0.7rem;">&times;</button>
+            <button class="btn btn-secondary btn-sm">&times;</button>
           </form>
         </td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
+  </div>
 </div>
 {% else %}
 <div class="card">
@@ -142,5 +218,36 @@
 </div>
 {% endif %}
 
+<script>
+function toggleBetType() {
+  var isMulti = document.querySelector('input[name="bet_type_switch"]:checked').value === 'multi';
+  document.getElementById('singleFields').style.display = isMulti ? 'none' : 'block';
+  document.getElementById('multiFields').style.display = isMulti ? 'block' : 'none';
+  document.getElementById('betTypeInput').value = isMulti ? 'multi' : 'single';
+
+  var singles = document.querySelectorAll('#singleFields input, #singleFields select');
+  var multis = document.querySelectorAll('#multiFields input, #multiFields select');
+  singles.forEach(function(el) { el.required = !isMulti; });
+  multis.forEach(function(el) { el.required = isMulti; });
+}
+
+function addLeg() {
+  var container = document.getElementById('multiLegs');
+  var leg = document.createElement('div');
+  leg.className = 'multi-leg';
+  leg.innerHTML =
+    '<input type="text" name="multi_match[]" placeholder="Match">' +
+    '<input type="text" name="multi_pick[]" placeholder="Pick">' +
+    '<button type="button" onclick="removeLeg(this)" class="btn btn-secondary btn-sm">&times;</button>';
+  container.appendChild(leg);
+}
+
+function removeLeg(btn) {
+  var container = document.getElementById('multiLegs');
+  if (container.children.length > 1) {
+    btn.parentElement.remove();
+  }
+}
+</script>
 
 {% endblock %}

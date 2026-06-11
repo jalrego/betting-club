@@ -67,6 +67,7 @@
     .btn-primary:hover { background: #4f46e5; }
     .btn-secondary { background: #262a36; color: #e1e4ed; }
     .btn-secondary:hover { background: #333849; }
+    .btn-sm { padding: 0.2rem 0.5rem; font-size: 0.7rem; }
     label { display: block; margin-bottom: 0.3rem; font-size: 0.8rem; color: #7f8494; }
     input, textarea {
       width: 100%;
@@ -115,11 +116,27 @@
     .items-center { align-items: center; }
     ::selection { background: #6366f1; color: #fff; }
     h1 { font-size: 1.3rem; font-weight: 700; }
-    @media (max-width: 600px) {
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 0.75rem; }
+    .toggle-row { display: flex; gap: 1rem; margin-bottom: 1rem; }
+    .toggle-row label { display: flex; align-items: center; gap: 0.4rem; cursor: pointer; font-size: 0.9rem; margin-bottom: 0; }
+    .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    select.input { width:100%; padding:0.6rem 0.75rem; background:#0f1117; border:1px solid #262a36; border-radius:6px; color:#e1e4ed; font-size:0.9rem; margin-bottom:0.75rem; }
+    .multi-leg { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; }
+    .multi-leg input { flex:1; margin-bottom:0; }
+    @media (max-width: 640px) {
       nav { flex-direction: column; gap: 0.5rem; padding: 0.75rem 1rem; }
       nav div { display: flex; flex-wrap: wrap; justify-content: center; }
       nav a { margin: 0 0.5rem; }
-      .stat-grid { grid-template-columns: 1fr 1fr; }
+      .container { padding: 0 0.75rem; margin: 1rem auto; }
+      .card { padding: 1rem; }
+      .stat-box { padding: 0.5rem; }
+      .stat-grid { grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+      .form-grid { grid-template-columns: 1fr; gap: 0; }
+      .multi-leg { flex-direction: column; gap: 0.3rem; }
+      .multi-leg input { margin-bottom: 0 !important; }
+    }
+    @media (max-width: 480px) {
+      .stat-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>

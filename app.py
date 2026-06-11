@@ -1,6 +1,7 @@
 import os
 import sys
 import sqlite3
+import json
 import logging
 from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -111,6 +112,8 @@ def init_db():
                     stake INTEGER NOT NULL,
                     odds REAL NOT NULL,
                     pick TEXT NOT NULL,
+                    bet_type TEXT NOT NULL DEFAULT 'single',
+                    selections TEXT,
                     result TEXT NOT NULL DEFAULT 'pending',
                     settled_at TIMESTAMP,
                     created_at TIMESTAMP NOT NULL DEFAULT NOW()
@@ -145,6 +148,8 @@ def init_db():
                     stake INTEGER NOT NULL,
                     odds REAL NOT NULL,
                     pick TEXT NOT NULL,
+                    bet_type TEXT NOT NULL DEFAULT 'single',
+                    selections TEXT,
                     result TEXT NOT NULL DEFAULT 'pending',
                     settled_at TEXT,
                     created_at TEXT NOT NULL DEFAULT (datetime('now')),
@@ -153,6 +158,18 @@ def init_db():
                 CREATE INDEX IF NOT EXISTS idx_bets_user ON bets(user_id);
             """)
         db.commit()
+
+        # Migration: add bet_type + selections columns for existing DBs
+        try:
+            if is_pg():
+                query("ALTER TABLE bets ADD COLUMN IF NOT EXISTS bet_type TEXT NOT NULL DEFAULT 'single'")
+                query("ALTER TABLE bets ADD COLUMN IF NOT EXISTS selections TEXT")
+            else:
+                query("ALTER TABLE bets ADD COLUMN bet_type TEXT NOT NULL DEFAULT 'single'")
+                query("ALTER TABLE bets ADD COLUMN selections TEXT")
+            db.commit()
+        except Exception:
+            db.rollback()
     except Exception as e:
         logging.error(f"init_db failed: {e}")
         raise
@@ -183,6 +200,11 @@ def user_bets(user_id):
     for r in rows:
         d = dict(r)
         d['stake'] = d['stake'] / 100.0
+        if d.get('selections'):
+            try:
+                d['selections'] = json.loads(d['selections'])
+            except (json.JSONDecodeError, TypeError):
+                d['selections'] = None
         bets.append(d)
     return bets
 
@@ -346,15 +368,32 @@ def dashboard():
 @app.route('/bet/new', methods=['POST'])
 @login_required
 def new_bet():
-    match_info = request.form.get('match_info', '').strip()
+    bet_type = request.form.get('bet_type', 'single')
     round_ = request.form.get('round', '').strip()
     stake_str = request.form.get('stake', '').strip()
     odds_str = request.form.get('odds', '').strip()
-    pick = request.form.get('pick', '').strip()
 
-    if not all([match_info, round_, stake_str, odds_str, pick]):
-        flash('All bet fields are required.', 'danger')
-        return redirect(url_for('dashboard'))
+    if bet_type == 'multi':
+        matches = request.form.getlist('multi_match[]')
+        picks = request.form.getlist('multi_pick[]')
+        if not matches or not picks or not round_ or not stake_str or not odds_str:
+            flash('All bet fields are required.', 'danger')
+            return redirect(url_for('dashboard'))
+        selections = [{"match": m.strip(), "pick": p.strip()} for m, p in zip(matches, picks) if m.strip() and p.strip()]
+        if len(selections) < 2:
+            flash('Multi-bet must have at least 2 selections.', 'danger')
+            return redirect(url_for('dashboard'))
+        match_info = ' / '.join(s['match'] for s in selections)
+        pick = ' / '.join(s['pick'] for s in selections)
+        selections_json = json.dumps(selections)
+    else:
+        match_info = request.form.get('match_info', '').strip()
+        pick = request.form.get('pick', '').strip()
+        if not all([match_info, round_, stake_str, odds_str, pick]):
+            flash('All bet fields are required.', 'danger')
+            return redirect(url_for('dashboard'))
+        selections_json = None
+        bet_type = 'single'
 
     try:
         stake = round(float(stake_str) * 100)
@@ -378,9 +417,9 @@ def new_bet():
         return redirect(url_for('dashboard'))
 
     query(
-        'INSERT INTO bets (user_id, match_info, round, stake, odds, pick) '
-        f'VALUES ({p()}, {p()}, {p()}, {p()}, {p()}, {p()})',
-        (session['user_id'], match_info, round_, stake, odds, pick)
+        'INSERT INTO bets (user_id, match_info, round, stake, odds, pick, bet_type, selections) '
+        f'VALUES ({p()}, {p()}, {p()}, {p()}, {p()}, {p()}, {p()}, {p()})',
+        (session['user_id'], match_info, round_, stake, odds, pick, bet_type, selections_json)
     )
     db.commit()
 
