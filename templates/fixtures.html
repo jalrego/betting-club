@@ -56,9 +56,6 @@
                 {% endif %}
               </td>
               <td class="fixt-away" style="padding:0.55rem 0.5rem;vertical-align:middle;text-align:left;font-size:0.85rem;font-weight:500;white-space:nowrap;">{% if f.away_team == 'TBD' %}<span style="color:#535768;font-style:italic;">TBD</span>{% else %}{{ team_flag(f.away_team) }} {{ f.away_team }}{% endif %}</td>
-              <td class="fixt-venue" style="padding:0.55rem 0 0.55rem 0.5rem;vertical-align:middle;text-align:right;font-size:0.6rem;color:#535768;white-space:nowrap;max-width:8rem;overflow:hidden;text-overflow:ellipsis;">
-                {% if f.venue and f.venue != 'TBD' %}{{ f.venue }}{% endif %}
-              </td>
               <td class="fixt-bets" style="padding:0.55rem 0 0.55rem 0.5rem;vertical-align:middle;text-align:right;white-space:nowrap;">
                 {% if f.bet_count > 0 %}
                   <span style="display:inline-flex;align-items:center;gap:0.25rem;padding:0.15rem 0.5rem;border-radius:999px;background:rgba(251,191,36,0.1);color:#fbbf24;font-size:0.7rem;font-weight:600;">
@@ -101,9 +98,6 @@
           <td class="fixt-away" style="padding:0.55rem 0.5rem;vertical-align:middle;text-align:left;font-size:0.85rem;font-weight:500;white-space:nowrap;">
             {% if f.away_team == 'TBD' %}<span style="color:#535768;font-style:italic;">TBD</span>{% else %}{{ team_flag(f.away_team) }} {{ f.away_team }}{% endif %}
           </td>
-          <td class="fixt-venue" style="padding:0.55rem 0 0.55rem 0.5rem;vertical-align:middle;text-align:right;font-size:0.6rem;color:#535768;white-space:nowrap;max-width:8rem;overflow:hidden;text-overflow:ellipsis;">
-            {% if f.venue and f.venue != 'TBD' %}{{ f.venue }}{% endif %}
-          </td>
           <td class="fixt-bets" style="padding:0.55rem 0 0.55rem 0.5rem;vertical-align:middle;text-align:right;white-space:nowrap;">
             {% if f.bet_count > 0 %}
               <span style="display:inline-flex;align-items:center;gap:0.25rem;padding:0.15rem 0.5rem;border-radius:999px;background:rgba(251,191,36,0.1);color:#fbbf24;font-size:0.7rem;font-weight:600;">
@@ -125,7 +119,6 @@
   50% { opacity: 0.3; }
 }
 @media (max-width: 640px) {
-  .fixt-venue { display: none; }
   .fixt-date span:last-child { font-size:0.55rem !important; }
   .fixt-home, .fixt-away { font-size:0.75rem !important; }
   .fixt-home .team-flag, .fixt-away .team-flag { font-size:1rem; }
