@@ -422,8 +422,8 @@ function toggleBetType() {
 
   var singles = document.querySelectorAll('#singleFields input, #singleFields select');
   var multis = document.querySelectorAll('#multiFields input, #multiFields select');
-  singles.forEach(function(el) { el.required = !isMulti; });
-  multis.forEach(function(el) { el.required = isMulti; });
+  singles.forEach(function(el) { el.disabled = isMulti; el.required = !isMulti; });
+  multis.forEach(function(el) { el.disabled = !isMulti; el.required = isMulti; });
 }
 
 function showAllMatches() {
@@ -562,6 +562,7 @@ document.addEventListener('change', function(e) {
 });
 
 document.addEventListener('DOMContentLoaded', function() {
+  toggleBetType();
   var bal = getBalance();
   var max = Math.min(bal, 50);
   document.getElementById('stakeSlider').max = max;
@@ -730,6 +731,7 @@ function filterBets(filter) {
     }
   });
   rows.forEach(function(r) {
+    if (r.classList.contains('bet-detail')) { r.style.display = 'none'; return; }
     var result = r.getAttribute('data-result');
     if (filter === 'all') { r.style.display = ''; }
     else if (filter === 'pending') { r.style.display = (result === 'pending') ? '' : 'none'; }
