@@ -264,48 +264,48 @@
 
 {% if bets %}
 <div class="card" style="padding: 0;">
-  <div style="display:flex;align-items:center;justify-content:space-between;padding:1rem 1rem 0 1rem;">
-    <h2 style="margin:0;">📋 My Bets</h2>
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:0.75rem 1rem 0 1rem;">
+    <h2 style="margin:0;font-size:1rem;">📋 My Bets</h2>
     {% if bets|length > 5 %}
       <a href="{{ url_for('user_profile', user_id=session.user_id) }}" class="text-sm" style="color:#7f8494;">View all ({{ bets|length }}) &rarr;</a>
     {% endif %}
   </div>
-  <div style="display:flex;gap:0.25rem;padding:0.5rem 1rem 0 1rem;">
-    <button class="filter-btn active" data-filter="all" onclick="filterBets('all')" style="background:#fbbf24;color:#0a0c12;border:none;padding:0.25rem 0.75rem;border-radius:6px;font-size:0.75rem;font-weight:600;cursor:pointer;">All</button>
-    <button class="filter-btn" data-filter="pending" onclick="filterBets('pending')" style="background:#1e2230;color:#e1e4ed;border:none;padding:0.25rem 0.75rem;border-radius:6px;font-size:0.75rem;cursor:pointer;">Active</button>
-    <button class="filter-btn" data-filter="settled" onclick="filterBets('settled')" style="background:#1e2230;color:#e1e4ed;border:none;padding:0.25rem 0.75rem;border-radius:6px;font-size:0.75rem;cursor:pointer;">Settled</button>
+  <div style="display:flex;gap:0.25rem;padding:0.35rem 1rem 0 1rem;">
+    <button class="filter-btn active" data-filter="all" onclick="filterBets('all')" style="background:#fbbf24;color:#0a0c12;border:none;padding:0.2rem 0.6rem;border-radius:6px;font-size:0.7rem;font-weight:600;cursor:pointer;">All</button>
+    <button class="filter-btn" data-filter="pending" onclick="filterBets('pending')" style="background:#1e2230;color:#e1e4ed;border:none;padding:0.2rem 0.6rem;border-radius:6px;font-size:0.7rem;cursor:pointer;">Active</button>
+    <button class="filter-btn" data-filter="settled" onclick="filterBets('settled')" style="background:#1e2230;color:#e1e4ed;border:none;padding:0.2rem 0.6rem;border-radius:6px;font-size:0.7rem;cursor:pointer;">Settled</button>
   </div>
   <div class="table-wrap">
-  <table>
+  <table style="font-size:0.8rem;">
     <thead>
       <tr>
-        <th>Type</th>
-        <th>Match</th>
-        <th>Stake</th>
-        <th>Odds</th>
-        <th>Pick</th>
-        <th>Result</th>
-        <th></th>
+        <th style="padding:0.35rem 0.3rem;">Type</th>
+        <th style="padding:0.35rem 0.3rem;">Match</th>
+        <th style="padding:0.35rem 0.3rem;">Stake</th>
+        <th style="padding:0.35rem 0.3rem;">Odds</th>
+        <th style="padding:0.35rem 0.3rem;">Pick</th>
+        <th style="padding:0.35rem 0.3rem;">Status</th>
+        <th style="padding:0.35rem 0.3rem;"></th>
       </tr>
     </thead>
     <tbody id="betsBody">
       {% for bet in bets[:5] %}
       <tr data-result="{{ bet.result }}" onclick="toggleBetDetail(this)" style="cursor:pointer;">
-        <td>
+        <td style="padding:0.35rem 0.3rem;">
           {% if bet.bet_type == 'multi' %}
-            <span class="gold" style="font-size:0.7rem;font-weight:600;">MULTI</span>
+            <span class="gold" style="font-size:0.65rem;font-weight:600;">MULTI</span>
           {% else %}
-            <span class="text-muted" style="font-size:0.7rem;">SINGLE</span>
+            <span class="text-muted" style="font-size:0.6rem;">SINGLE</span>
           {% endif %}
         </td>
-        <td>
-          <strong>{{ bet.match_info }}</strong>
+        <td style="padding:0.35rem 0.3rem;">
+          <strong style="font-size:0.75rem;">{{ bet.match_info }}</strong>
           {% if bet.selections %}
-            <details style="margin-top: 0.25rem;" onclick="event.stopPropagation()">
-              <summary class="text-muted text-sm" style="cursor:pointer;font-size:0.7rem;">{{ bet.selections|length }} legs</summary>
-              <div style="margin-top: 0.25rem; padding-left: 0.5rem; border-left: 2px solid #262a36;">
+            <details style="margin-top: 0.1rem;" onclick="event.stopPropagation()">
+              <summary class="text-muted text-sm" style="cursor:pointer;font-size:0.6rem;">{{ bet.selections|length }} legs</summary>
+              <div style="margin-top: 0.15rem; padding-left: 0.3rem; border-left: 2px solid #262a36;">
                 {% for leg in bet.selections %}
-                  <div class="text-sm" style="font-size:0.75rem;margin-bottom:0.2rem;">
+                  <div style="font-size:0.65rem;margin-bottom:0.1rem;">
                     <span class="text-muted">{{ leg.match }}</span> → {{ leg.pick }}
                   </div>
                 {% endfor %}
@@ -313,10 +313,10 @@
             </details>
           {% endif %}
         </td>
-        <td>&euro;{{ "%.2f"|format(bet.stake) }}</td>
-        <td>{{ "%.2f"|format(bet.odds) }}</td>
-        <td class="text-sm">{{ bet.pick }}</td>
-        <td>
+        <td style="padding:0.35rem 0.3rem;font-size:0.75rem;">&euro;{{ "%.2f"|format(bet.stake) }}</td>
+        <td style="padding:0.35rem 0.3rem;font-size:0.75rem;">{{ "%.2f"|format(bet.odds) }}</td>
+        <td style="padding:0.35rem 0.3rem;font-size:0.7rem;">{{ bet.pick }}</td>
+        <td style="padding:0.35rem 0.3rem;">
           {% if bet.result == 'pending' %}
             <span class="badge badge-pending">Pending</span>
           {% elif bet.result == 'won' %}
@@ -327,37 +327,39 @@
             <span class="badge badge-cashed">Cashed</span>
           {% endif %}
         </td>
-        <td onclick="event.stopPropagation()">
-          {% if bet.result == 'pending' %}
-          <button class="btn btn-secondary btn-sm" onclick="openEditModal(this)"
-            data-id="{{ bet.id }}"
-            data-match="{{ bet.match_info }}"
-            data-pick="{{ bet.pick }}"
-            data-stake="{{ bet.stake }}"
-            data-odds="{{ bet.odds }}"
-            data-match-number="{{ bet.match_number or '' }}">Edit</button>
-          <span class="settle-group" data-bet-id="{{ bet.id }}">
-            <button class="btn btn-secondary btn-sm settle-btn" onclick="showSettleOptions(this)">Settle</button>
-            <span class="settle-options" style="display:none;">
-              <form method="POST" action="{{ url_for('settle_bet', bet_id=bet.id) }}" style="display:inline">
-                <button name="result" value="won" class="btn btn-success btn-sm">Won</button>
-              </form>
-              <form method="POST" action="{{ url_for('settle_bet', bet_id=bet.id) }}" style="display:inline">
-                <button name="result" value="lost" class="btn btn-danger btn-sm">Lost</button>
-              </form>
-              <button class="btn btn-secondary btn-sm" onclick="hideSettleOptions(this)">Cancel</button>
+        <td style="padding:0.35rem 0.3rem;" onclick="event.stopPropagation()">
+          <div style="display:flex;gap:0.2rem;align-items:center;">
+            {% if bet.result == 'pending' %}
+            <span class="settle-group" data-bet-id="{{ bet.id }}" style="display:inline-flex;align-items:center;gap:0.2rem;">
+              <button class="btn btn-secondary btn-sm settle-btn" style="padding:0.15rem 0.4rem;font-size:0.65rem;" onclick="showSettleOptions(this)">Settle</button>
+              <span class="settle-options" style="display:none;gap:0.2rem;align-items:center;">
+                <form method="POST" action="{{ url_for('settle_bet', bet_id=bet.id) }}" style="display:inline">
+                  <button name="result" value="won" class="btn btn-success btn-sm" style="padding:0.15rem 0.4rem;font-size:0.65rem;">Won</button>
+                </form>
+                <form method="POST" action="{{ url_for('settle_bet', bet_id=bet.id) }}" style="display:inline">
+                  <button name="result" value="lost" class="btn btn-danger btn-sm" style="padding:0.15rem 0.4rem;font-size:0.65rem;">Lost</button>
+                </form>
+                <button class="btn btn-secondary btn-sm" style="padding:0.15rem 0.4rem;font-size:0.65rem;" onclick="hideSettleOptions(this)">Cancel</button>
+              </span>
             </span>
-          </span>
-          {% endif %}
-          <form method="POST" action="{{ url_for('delete_bet', bet_id=bet.id) }}" style="display:inline" onsubmit="return confirm('Delete this bet?')">
-            <button class="btn btn-secondary btn-sm">&times;</button>
-          </form>
+            <button class="btn btn-secondary btn-sm" style="padding:0.15rem 0.35rem;font-size:0.65rem;line-height:1;" onclick="openEditModal(this)"
+              data-id="{{ bet.id }}"
+              data-match="{{ bet.match_info }}"
+              data-pick="{{ bet.pick }}"
+              data-stake="{{ bet.stake }}"
+              data-odds="{{ bet.odds }}"
+              data-match-number="{{ bet.match_number or '' }}" title="Edit">✏️</button>
+            {% endif %}
+            <form method="POST" action="{{ url_for('delete_bet', bet_id=bet.id) }}" style="display:inline" onsubmit="return confirm('Delete this bet?')">
+              <button class="btn btn-secondary btn-sm" style="padding:0.15rem 0.35rem;font-size:0.65rem;line-height:1;" title="Delete">🗑️</button>
+            </form>
+          </div>
         </td>
       </tr>
       {% set fs = fixture_scores.get(bet.match_number|string) %}
       <tr class="bet-detail" style="display:none;background:#141824;">
-        <td colspan="7" style="padding:0.75rem 1rem;">
-          <div style="display:flex;align-items:center;flex-wrap:wrap;gap:0.75rem;font-size:0.85rem;">
+        <td colspan="7" style="padding:0.5rem 0.75rem;">
+          <div style="display:flex;align-items:center;flex-wrap:wrap;gap:0.5rem;font-size:0.8rem;">
             {% if fs and fs.home_score is not none %}
             <span><strong>{{ fs.home_team }} {{ fs.home_score }} &ndash; {{ fs.away_score }} {{ fs.away_team }}</strong></span>
             {% elif fs %}
@@ -369,7 +371,7 @@
               {% if fs.home_score is not none and fs_status == 'completed' %}
                 <span class="badge badge-pending">Settled</span>
               {% elif fs_status == 'live' %}
-                <span class="badge badge-pending">LIVE</span>
+                <span class="badge badge-pending"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#22c55e;margin-right:4px;animation:pulse 1.5s infinite;"></span>In Play</span>
               {% else %}
                 <span class="badge badge-pending">Upcoming</span>
               {% endif %}

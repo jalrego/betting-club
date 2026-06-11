@@ -80,7 +80,14 @@
         <td class="text-sm">{{ bet.pick }}</td>
         <td>
           {% if bet.result == 'pending' %}
-            <span class="text-muted">⏳ Pending</span>
+            {% set fs = fixture_scores.get(bet.match_number|string) %}
+            {% if fs and fs.status == 'live' %}
+              <span class="badge badge-pending"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#22c55e;margin-right:4px;animation:pulse 1.5s infinite;"></span>In Play</span>
+            {% elif fs and fs.home_score is not none and fs.status == 'completed' %}
+              <span class="text-muted">⏳ Pending</span>
+            {% else %}
+              <span class="text-muted">⏳ Pending</span>
+            {% endif %}
           {% elif bet.result == 'won' %}
             <span class="green">✅ Won</span>
           {% elif bet.result == 'lost' %}

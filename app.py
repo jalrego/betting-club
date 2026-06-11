@@ -1338,6 +1338,11 @@ def user_profile(user_id):
         cur_user = query(f'SELECT username FROM users WHERE id = {p()}', (session['user_id'],)).fetchone()
         is_admin = cur_user and cur_user['username'] == 'Joao'
         is_owner = user_id == session['user_id']
+        # fixture scores for bet status display
+        score_rows = query(
+            'SELECT match_number, home_team, away_team, home_score, away_score, status, date, match_time FROM fixtures'
+        ).fetchall()
+        fixture_scores = {str(r['match_number']): r for r in score_rows}
     except Exception as e:
         logging.error(f"user_profile error: {e}")
         raise
@@ -1349,6 +1354,7 @@ def user_profile(user_id):
                            stats=stats,
                            starting=STARTING_BALANCE / 100.0,
                            fixtures=fixtures_for_select,
+                           fixture_scores=fixture_scores,
                            is_admin=is_admin,
                            is_owner=is_owner)
 import re
