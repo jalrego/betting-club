@@ -714,7 +714,9 @@ def dashboard():
             d['stake'] = d['stake'] / 100.0
             activity.append(d)
         # fixtures for dropdown
-        fixtures_list = query('SELECT match_number, home_team, away_team, round, date FROM fixtures ORDER BY match_number').fetchall()
+        fixtures_list = query(
+            "SELECT match_number, home_team, away_team, round, date FROM fixtures WHERE home_team != 'TBD' AND away_team != 'TBD' ORDER BY match_number"
+        ).fetchall()
         fixtures_for_select = [dict(r) for r in fixtures_list]
         # balance history for sparkline
         hist = query(
@@ -968,7 +970,7 @@ def admin_panel():
             'bet_count': bet_count,
             'wins': stats.get('wins', 0),
             'total': stats.get('total', 0),
-            'staked': stats.get('staked', 0) / 100.0,
+            'staked': stats.get('staked', 0),
         })
 
     return render_template('admin_panel.html', users=user_data)

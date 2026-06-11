@@ -37,10 +37,10 @@
         {% for u in users %}
         <tr style="border-bottom:1px solid #1a1e2a;">
           <td style="padding:0.5rem;"><strong>{{ u.username }}</strong></td>
-          <td style="padding:0.5rem;">${{ "%.2f"|format(u.balance) }}</td>
+          <td style="padding:0.5rem;">&euro;{{ "%.2f"|format(u.balance) }}</td>
           <td style="padding:0.5rem;">{{ u.bet_count }}</td>
           <td style="padding:0.5rem;">{{ u.wins }}/{{ u.total }}</td>
-          <td style="padding:0.5rem;">${{ "%.2f"|format(u.staked) }}</td>
+          <td style="padding:0.5rem;">&euro;{{ "%.2f"|format(u.staked) }}</td>
           <td style="padding:0.5rem;">
             <form method="POST" style="display:inline;" onsubmit="return confirm('Delete all bets for {{ u.username }}?');">
               <input type="hidden" name="action" value="delete_all_bets">
