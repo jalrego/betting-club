@@ -1,9 +1,109 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="card" style="max-width:480px;margin:0 auto;">
-  <h2>Profile</h2>
-  <p style="color:#9ca3af;margin-bottom:1.5rem;">Logged in as <strong>{{ username }}</strong></p>
 
+<div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem;">
+  <div class="avatar" style="width:3rem;height:3rem;font-size:1.4rem;background:#6366f1;">{{ username[:1]|upper }}</div>
+  <div>
+    <h1 style="margin:0;">{{ username }}</h1>
+    <p class="text-muted text-sm" style="margin:0;">Player Profile</p>
+  </div>
+</div>
+
+<div class="stat-grid" style="grid-template-columns:1fr 1fr 1fr;margin-bottom:0.5rem;">
+  <div class="card stat-box" style="padding:0.6rem 0.5rem;border-top-color:#22c55e;">
+    <div class="label">Available Balance</div>
+    <div class="value" style="font-size:1.2rem;">&euro;{{ "%.2f"|format(balance) }}</div>
+  </div>
+  <div class="card stat-box" style="padding:0.6rem 0.5rem;border-top-color:#fbbf24;">
+    <div class="label">In Play</div>
+    {% if stats.pending_stake > 0 %}
+      <div class="value" style="font-size:1.2rem;">&euro;{{ "%.2f"|format(stats.pending_stake) }}</div>
+    {% else %}
+      <div class="value" style="font-size:1.2rem;">&euro;0.00</div>
+    {% endif %}
+  </div>
+  <div class="card stat-box" style="padding:0.6rem 0.5rem;border-top-color:#6366f1;">
+    <div class="label">Realized P&amp;L</div>
+    {% set realized = balance + stats.pending_stake - starting %}
+    {% if realized > 0 %}
+      <div class="value green" style="font-size:1.2rem;">+&euro;{{ "%.2f"|format(realized) }}</div>
+    {% elif realized < 0 %}
+      <div class="value red" style="font-size:1.2rem;">&euro;{{ "%.2f"|format(realized) }}</div>
+    {% else %}
+      <div class="value" style="font-size:1.2rem;">&euro;0.00</div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="stat-grid" style="grid-template-columns:1fr 1fr 1fr 1fr;margin-bottom:0.5rem;">
+  <div class="card stat-box" style="padding:0.5rem 0.25rem;border-top-color:transparent;">
+    <div class="label">Bets</div>
+    <div class="value" style="font-size:1rem;">{{ stats.total }}</div>
+  </div>
+  <div class="card stat-box" style="padding:0.5rem 0.25rem;border-top-color:transparent;">
+    <div class="label">Won</div>
+    <div class="value green" style="font-size:1rem;">{{ stats.won }}</div>
+  </div>
+  <div class="card stat-box" style="padding:0.5rem 0.25rem;border-top-color:transparent;">
+    <div class="label">Lost</div>
+    <div class="value red" style="font-size:1rem;">{{ stats.lost }}</div>
+  </div>
+  <div class="card stat-box" style="padding:0.5rem 0.25rem;border-top-color:transparent;">
+    <div class="label">Win Rate</div>
+    <div class="value" style="font-size:1rem;">{{ stats.win_rate }}%</div>
+  </div>
+</div>
+
+{% if balance_history|length > 1 %}
+<div class="card" style="padding:0.75rem 1rem;">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.25rem;">
+    <span style="font-size:0.65rem;color:#7f8494;text-transform:uppercase;letter-spacing:0.08em;font-weight:500;">Balance History</span>
+  </div>
+  <svg viewBox="0 0 200 32" style="width:100%;height:32px;display:block;">
+    {% set min_bal = balance_history|map(attribute='balance')|min %}
+    {% set max_bal = balance_history|map(attribute='balance')|max %}
+    {% set range = (max_bal - min_bal) or 1 %}
+    {% set count = balance_history|length %}
+    <polyline fill="none" stroke="#fbbf24" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+      points="
+      {% for r in balance_history %}
+        {% set x = (loop.index0 / (count - 1)) * 196 + 2 %}
+        {% set y = 28 - ((r.balance - min_bal) / range) * 24 %}
+        {{ "%.1f"|format(x) }},{{ "%.1f"|format(y) }}
+        {% if not loop.last %} {% endif %}
+      {% endfor %}
+    "/>
+  </svg>
+</div>
+{% endif %}
+
+{% if next_match %}
+<div class="card">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;">
+    <span style="font-size:0.65rem;color:#7f8494;text-transform:uppercase;letter-spacing:0.08em;font-weight:500;">Next Match</span>
+    <span class="badge badge-pending">Upcoming</span>
+  </div>
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:0.75rem;">
+    <div style="text-align:center;flex:1;">
+      <div style="font-size:2rem;margin-bottom:0.25rem;">{{ team_flag(next_match.home_team) }}</div>
+      <div style="font-weight:600;font-size:0.9rem;">{{ next_match.home_team }}</div>
+    </div>
+    <div style="text-align:center;flex-shrink:0;">
+      <div style="background:#1a1e2a;padding:0.35rem 0.75rem;border-radius:8px;font-weight:700;font-size:0.9rem;color:#fbbf24;">vs</div>
+    </div>
+    <div style="text-align:center;flex:1;">
+      <div style="font-size:2rem;margin-bottom:0.25rem;">{{ team_flag(next_match.away_team) }}</div>
+      <div style="font-weight:600;font-size:0.9rem;">{{ next_match.away_team }}</div>
+    </div>
+  </div>
+  <div style="text-align:center;margin-top:0.5rem;">
+    <span class="text-muted text-sm">{{ next_match.lisbon_date }} &middot; {{ next_match.lisbon_time }}</span>
+  </div>
+</div>
+{% endif %}
+
+<div class="card" style="max-width:480px;margin:0 auto;margin-top:1rem;">
+  <h2>Change Password</h2>
   <form method="POST">
     <div class="form-group">
       <label for="current_password">Current Password</label>

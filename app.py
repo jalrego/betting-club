@@ -1,5 +1,6 @@
 import os
 import sys
+import re
 import sqlite3
 import json
 import logging
@@ -667,7 +668,37 @@ def profile():
             flash('Password updated successfully!', 'success')
             return redirect(url_for('profile'))
 
-    return render_template('profile.html', username=user['username'])
+    try:
+        balance = user_balance(user_id)
+        stats = user_bet_stats(user_id)
+        hist = query(
+            f'SELECT balance, created_at FROM balance_records WHERE user_id = {p()} ORDER BY created_at ASC',
+            (user_id,)
+        ).fetchall()
+        balance_history = [dict(r) for r in hist]
+        next_match = query(
+            f'SELECT * FROM fixtures WHERE home_team != \'TBD\' AND away_team != \'TBD\' AND home_score IS NULL ORDER BY date ASC, match_time ASC LIMIT 1'
+        ).fetchone()
+        if next_match:
+            next_match = dict(next_match)
+            next_match['lisbon_date'], next_match['lisbon_time'] = lisbon_time(
+                next_match['date'], next_match['match_time'], next_match.get('city', ''))
+        score_rows = query(
+            'SELECT match_number, home_team, away_team, home_score, away_score, status, date, match_time FROM fixtures'
+        ).fetchall()
+        fixture_scores = {str(r['match_number']): r for r in score_rows}
+    except Exception as e:
+        logging.error(f"profile error: {e}")
+        raise
+
+    return render_template('profile.html',
+                           username=user['username'],
+                           balance=balance / 100.0,
+                           stats=stats,
+                           balance_history=balance_history,
+                           starting=STARTING_BALANCE / 100.0,
+                           next_match=next_match,
+                           fixture_scores=fixture_scores)
 
 
 @app.route('/dashboard')
@@ -1064,17 +1095,39 @@ def fixtures():
             'SELECT * FROM fixtures ORDER BY match_number'
         ).fetchall()
         fixtures_list = [dict(r) for r in rows]
-        # bet totals per match
-        bet_data = query(
-            f'SELECT match_number, COUNT(*) as bet_count, SUM(stake) as total_staked '
-            f'FROM bets WHERE match_number IS NOT NULL GROUP BY match_number'
+        # bet totals per match — handle multi-bets proportionally
+        all_bets = query(
+            'SELECT stake, bet_type, selections, match_number FROM bets WHERE match_number IS NOT NULL'
         ).fetchall()
         bet_map = {}
-        for b in bet_data:
-            bet_map[b['match_number']] = {
-                'count': b['bet_count'],
-                'total': (b['total_staked'] or 0) / 100.0,
-            }
+        for b in all_bets:
+            mn = b['match_number']
+            if b['bet_type'] == 'multi' and b['selections']:
+                try:
+                    legs = json.loads(b['selections'])
+                except (json.JSONDecodeError, TypeError):
+                    legs = []
+                if legs:
+                    portion = b['stake'] / len(legs)
+                    for leg in legs:
+                        m = re.match(r'^\s*(.+?)\s+vs\s+(.+?)\s*$', leg['match'])
+                        if m:
+                            home, away = m.group(1).strip().lower(), m.group(2).strip().lower()
+                            row = query(
+                                f'SELECT match_number FROM fixtures WHERE LOWER(home_team) = {p()} AND LOWER(away_team) = {p()}',
+                                (home, away)
+                            ).fetchone()
+                            if row:
+                                leg_mn = row['match_number']
+                                if leg_mn not in bet_map:
+                                    bet_map[leg_mn] = {'count': 0, 'total': 0.0}
+                                bet_map[leg_mn]['count'] += 1
+                                bet_map[leg_mn]['total'] += portion / 100.0
+            else:
+                if mn not in bet_map:
+                    bet_map[mn] = {'count': 0, 'total': 0.0}
+                bet_map[mn]['count'] += 1
+                bet_map[mn]['total'] += b['stake'] / 100.0
         for f in fixtures_list:
             info = bet_map.get(f['match_number'])
             f['bet_count'] = info['count'] if info else 0
@@ -1356,8 +1409,7 @@ def user_profile(user_id):
                            fixtures=fixtures_for_select,
                            fixture_scores=fixture_scores,
                            is_admin=is_admin,
-                           is_owner=is_owner)
-import re
+                                                       is_owner=is_owner)
 
 VERSUS_RE = re.compile(r'^\s*(.+?)\s+vs\s+(.+?)\s*$')
 

@@ -4,6 +4,44 @@
 <h1 style="margin-bottom: 1.5rem;">Leaderboard</h1>
 
 {% if players %}
+{% set colors = ['#6366f1','#22c55e','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#ec4899','#10b981'] %}
+{% if players|length >= 3 %}
+{% set p1 = players[0] %}{% set p2 = players[1] %}{% set p3 = players[2] %}
+<div style="display:flex;align-items:flex-end;justify-content:center;gap:0.75rem;margin-bottom:2rem;padding:1.5rem 0.5rem 0;position:relative;">
+  <div style="flex:1;text-align:center;">
+    <div style="display:flex;flex-direction:column;align-items:center;">
+      <span class="avatar" style="width:2.5rem;height:2.5rem;font-size:1.1rem;background:#9ca3af;">{{ p2.username[:1]|upper }}</span>
+      <a href="{{ url_for('user_profile', user_id=p2.id) }}" style="font-weight:600;font-size:0.85rem;margin-top:0.3rem;color:#9ca3af;">{{ p2.username }}</a>
+      <span style="font-size:0.7rem;color:#7f8494;">&euro;{{ "%.2f"|format(p2.latest_balance) }}</span>
+    </div>
+    <div style="background:#9ca3af;height:80px;border-radius:8px 8px 0 0;margin-top:0.5rem;display:flex;align-items:flex-start;justify-content:center;padding-top:0.5rem;">
+      <span style="font-size:1.5rem;font-weight:700;color:#1a1e2a;">2</span>
+    </div>
+  </div>
+  <div style="flex:1.2;text-align:center;">
+    <div style="display:flex;flex-direction:column;align-items:center;">
+      <span style="font-size:1.8rem;margin-bottom:0.15rem;">👑</span>
+      <span class="avatar" style="width:3rem;height:3rem;font-size:1.3rem;background:linear-gradient(135deg,#fbbf24,#eab308);box-shadow:0 0 12px rgba(251,191,36,0.4);">{{ p1.username[:1]|upper }}</span>
+      <a href="{{ url_for('user_profile', user_id=p1.id) }}" style="font-weight:700;font-size:1rem;margin-top:0.3rem;color:#fbbf24;">{{ p1.username }}</a>
+      <span style="font-size:0.85rem;font-weight:600;color:#fbbf24;">&euro;{{ "%.2f"|format(p1.latest_balance) }}</span>
+    </div>
+    <div style="background:linear-gradient(180deg,#fbbf24,#eab308);height:110px;border-radius:8px 8px 0 0;margin-top:0.5rem;display:flex;align-items:flex-start;justify-content:center;padding-top:0.5rem;box-shadow:0 -4px 20px rgba(251,191,36,0.25);">
+      <span style="font-size:2rem;font-weight:700;color:#1a1e2a;">1</span>
+    </div>
+  </div>
+  <div style="flex:1;text-align:center;">
+    <div style="display:flex;flex-direction:column;align-items:center;">
+      <span class="avatar" style="width:2.5rem;height:2.5rem;font-size:1.1rem;background:#d97706;">{{ p3.username[:1]|upper }}</span>
+      <a href="{{ url_for('user_profile', user_id=p3.id) }}" style="font-weight:600;font-size:0.85rem;margin-top:0.3rem;color:#d97706;">{{ p3.username }}</a>
+      <span style="font-size:0.7rem;color:#7f8494;">&euro;{{ "%.2f"|format(p3.latest_balance) }}</span>
+    </div>
+    <div style="background:#d97706;height:55px;border-radius:8px 8px 0 0;margin-top:0.5rem;display:flex;align-items:flex-start;justify-content:center;padding-top:0.5rem;">
+      <span style="font-size:1.2rem;font-weight:700;color:#1a1e2a;">3</span>
+    </div>
+  </div>
+</div>
+{% endif %}
+
 <div class="card" style="padding: 0;">
   <div class="table-wrap">
   <table>
@@ -20,9 +58,8 @@
       </tr>
     </thead>
     <tbody>
-      {% set colors = ['#6366f1','#22c55e','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#ec4899','#10b981'] %}
       {% for player in players %}
-      <tr>
+      <tr{% if loop.index <= 3 %} style="background:{% if loop.index == 1 %}rgba(251,191,36,0.05){% elif loop.index == 2 %}rgba(156,163,175,0.04){% else %}rgba(217,119,6,0.04){% endif %};"{% endif %}>
         <td style="padding-left: 1rem;">
           {% if loop.index == 1 %}
             <span class="rank-num rank-1">1</span>
