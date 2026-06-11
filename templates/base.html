@@ -43,19 +43,6 @@
     nav a { color: #7f8494; text-decoration: none; margin-left: 1.5rem; font-size: 0.9rem; transition: color 0.15s; }
     nav a:hover { color: #fbbf24; }
     .container { max-width: 820px; margin: 2rem auto; padding: 0 1rem; }
-    .alerts { margin-bottom: 1rem; }
-    .alert {
-      padding: 0.75rem 1rem;
-      border-radius: 8px;
-      margin-bottom: 0.5rem;
-      font-size: 0.9rem;
-      animation: alertIn 0.25s ease-out;
-    }
-    @keyframes alertIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
-    .alert-success { background: #0d2217; color: #4ade80; border: 1px solid #166534; }
-    .alert-danger  { background: #220d0d; color: #f87171; border: 1px solid #991b1b; }
-    .alert-warning { background: #221a0d; color: #fbbf24; border: 1px solid #854d0e; }
-    .alert-info    { background: #0d1722; color: #60a5fa; border: 1px solid #1e3a5f; }
     .card {
       background: #13161e;
       border-radius: 10px;
@@ -153,6 +140,12 @@
     .gap { gap: 0.75rem; }
     .items-center { align-items: center; }
     ::selection { background: #fbbf24; color: #0a0c12; }
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0a0c12; }
+    ::-webkit-scrollbar-thumb { background: #2a2f42; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #3a3f52; }
+    * { scrollbar-width: thin; scrollbar-color: #2a2f42 #0a0c12; }
     h1 { font-size: 1.3rem; font-weight: 700; font-family: 'Oswald', sans-serif; letter-spacing: 0.02em; }
     .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 0.75rem; }
     .toggle-row {
@@ -183,11 +176,39 @@
     .welcome-banner h1 { font-size: 1.6rem; margin-bottom: 0.25rem; }
     .welcome-banner p { font-size: 0.85rem; color: #7f8494; }
     /* Badges */
-    .badge {
-      display: inline-flex; align-items: center; gap: 0.25rem;
-      padding: 0.2rem 0.6rem; border-radius: 999px; font-size: 0.7rem;
-      font-weight: 600; letter-spacing: 0.02em;
+    /* Toast */
+    #toast-container {
+      position: fixed; top: 1rem; right: 1rem; z-index: 9999;
+      display: flex; flex-direction: column; gap: 0.5rem;
+      pointer-events: none;
     }
+    .toast {
+      pointer-events: auto;
+      padding: 0.75rem 1rem 0.75rem 0.9rem;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      max-width: 360px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      animation: toastIn 0.3s ease-out;
+      border-left: 3px solid;
+    }
+    @keyframes toastIn { from { opacity: 0; transform: translateX(100%); } to { opacity: 1; transform: translateX(0); } }
+    @keyframes toastOut { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(100%); } }
+    .toast-success { background: #0d2217; color: #4ade80; border-color: #22c55e; }
+    .toast-danger  { background: #220d0d; color: #f87171; border-color: #ef4444; }
+    .toast-warning { background: #221a0d; color: #fbbf24; border-color: #f59e0b; }
+    .toast-info    { background: #0d1722; color: #60a5fa; border-color: #3b82f6; }
+    .toast-close {
+      margin-left: auto; background: none; border: none; color: inherit;
+      opacity: 0.5; cursor: pointer; font-size: 1rem; padding: 0 0 0 0.5rem;
+      line-height: 1;
+    }
+    .toast-close:hover { opacity: 1; }
+    .badge {
     .badge-pending { background: rgba(251,191,36,0.12); color: #fbbf24; }
     .badge-won { background: rgba(34,197,94,0.12); color: #22c55e; }
     .badge-lost { background: rgba(239,68,68,0.12); color: #ef4444; }
@@ -262,20 +283,34 @@
     </div>
   </nav>
 
+  <div id="toast-container"></div>
   <div class="container">
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        <div class="alerts">
-          {% for category, message in messages %}
-            <div class="alert alert-{{ category }}">{{ message }}</div>
-          {% endfor %}
-        </div>
-      {% endif %}
-    {% endwith %}
+    {% set toasts = get_flashed_messages(with_categories=true) %}
+    {% if toasts %}
+      <div id="flash-data" data-toasts='{{ toasts | tojson | safe }}' style="display:none;"></div>
+    {% endif %}
 
     {% block content %}{% endblock %}
   </div>
 <script>
+function showToast(msg, type) {
+  var c = document.getElementById('toast-container');
+  var t = document.createElement('div');
+  t.className = 'toast toast-' + type;
+  var icons = {success:'✓',danger:'✗',warning:'⚠',info:'ℹ'};
+  t.innerHTML = '<span>' + (icons[type]||'ℹ') + '</span><span>' + msg + '</span><button class="toast-close" onclick="this.parentElement.remove()">×</button>';
+  c.appendChild(t);
+  setTimeout(function(){ t.style.animation='toastOut 0.3s ease-out forwards'; setTimeout(function(){t.remove()},300); }, 4000);
+}
+document.addEventListener('DOMContentLoaded', function() {
+  var fd = document.getElementById('flash-data');
+  if (fd) {
+    try {
+      var msgs = JSON.parse(fd.getAttribute('data-toasts'));
+      msgs.forEach(function(m){ showToast(m[1], m[0]); });
+    } catch(e) {}
+  }
+});
 function showSettleOptions(btn) {
   var group = btn.closest('.settle-group');
   group.querySelector('.settle-btn').style.display = 'none';
