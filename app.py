@@ -1330,6 +1330,13 @@ def user_profile(user_id):
         balance = user_balance(user_id)
         bets = user_bets(user_id)
         stats = user_bet_stats(user_id)
+        fixtures_list = query(
+            "SELECT match_number, home_team, away_team, round, date FROM fixtures WHERE home_team != 'TBD' AND away_team != 'TBD' ORDER BY match_number"
+        ).fetchall()
+        fixtures_for_select = [dict(r) for r in fixtures_list]
+        # check if current user is admin
+        cur_user = query(f'SELECT username FROM users WHERE id = {p()}', (session['user_id'],)).fetchone()
+        is_admin = cur_user and cur_user['username'] == 'Joao'
     except Exception as e:
         logging.error(f"user_profile error: {e}")
         raise
@@ -1339,7 +1346,9 @@ def user_profile(user_id):
                            balance=balance / 100.0,
                            bets=bets,
                            stats=stats,
-                           starting=STARTING_BALANCE / 100.0)
+                           starting=STARTING_BALANCE / 100.0,
+                           fixtures=fixtures_for_select,
+                           is_admin=is_admin)
 import re
 
 VERSUS_RE = re.compile(r'^\s*(.+?)\s+vs\s+(.+?)\s*$')

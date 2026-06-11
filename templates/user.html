@@ -46,6 +46,7 @@
         <th>Odds</th>
         <th>Pick</th>
         <th>Result</th>
+        {% if is_admin %}<th></th>{% endif %}
       </tr>
     </thead>
     <tbody>
@@ -88,6 +89,23 @@
             <span class="gold">💵 Cashed</span>
           {% endif %}
         </td>
+        {% if is_admin %}
+        <td>
+          {% if bet.result == 'pending' %}
+          <form method="POST" action="{{ url_for('settle_bet', bet_id=bet.id) }}" style="display:inline">
+            <button name="result" value="won" class="btn btn-secondary btn-sm">Won</button>
+            <button name="result" value="lost" class="btn btn-secondary btn-sm">Lost</button>
+          </form>
+          <button class="btn btn-secondary btn-sm" onclick="openEditModal(this)"
+            data-id="{{ bet.id }}"
+            data-match="{{ bet.match_info }}"
+            data-pick="{{ bet.pick }}"
+            data-stake="{{ bet.stake }}"
+            data-odds="{{ bet.odds }}"
+            data-match-number="{{ bet.match_number or '' }}">Edit</button>
+          {% endif %}
+        </td>
+        {% endif %}
       </tr>
       {% endfor %}
     </tbody>
