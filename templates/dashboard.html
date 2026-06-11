@@ -349,14 +349,14 @@ function filterMatches() {
       div.style.cssText = 'padding:0.5rem 0.75rem;cursor:pointer;font-size:0.85rem;border-bottom:1px solid #1a1e2a;';
       div.onmouseover = function(){this.style.background='#1a1e2a';};
       div.onmouseout = function(){this.style.background='';};
-      div.onclick = (function(opt, text) {
+      div.onclick = (function(opt, text, home, away) {
         return function() {
           document.getElementById('matchSearch').value = text;
           document.getElementById('match_number').value = opt.value;
           document.getElementById('match_info').value = home + ' vs ' + away;
           dd.style.display = 'none';
         };
-      })(opt, text);
+      })(opt, text, home, away);
       dd.appendChild(div);
     }
   }
