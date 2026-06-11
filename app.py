@@ -654,10 +654,20 @@ def new_bet():
         bet_type = 'single'
 
     try:
-        stake = round(float(stake_str) * 100)
+        stake_raw = float(stake_str)
+        if stake_raw <= 0:
+            raise ValueError
+        # max 2 decimal places
+        if '.' in stake_str and len(stake_str.split('.')[1]) > 2:
+            flash('Stake must have at most 2 decimal places (e.g. 3.00 or 3).', 'danger')
+            return redirect(url_for('dashboard'))
+        stake = round(stake_raw * 100)
         odds = float(odds_str)
+        if '.' in odds_str and len(odds_str.split('.')[1]) > 2:
+            flash('Odds must have at most 2 decimal places (e.g. 2.10 or 3).', 'danger')
+            return redirect(url_for('dashboard'))
     except ValueError:
-        flash('Stake and odds must be numbers.', 'danger')
+        flash('Stake and odds must be valid positive numbers.', 'danger')
         return redirect(url_for('dashboard'))
 
     if stake < 1:
