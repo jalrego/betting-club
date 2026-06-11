@@ -25,7 +25,7 @@
       {% for t in teams %}
       <tr style="border-bottom:1px solid #1a1e2a;">
         <td style="padding:0.4rem 0.25rem;text-align:left;color:#535768;">{{ loop.index }}</td>
-        <td style="padding:0.4rem 0.25rem;text-align:left;font-weight:500;">{{ t.team }}</td>
+        <td style="padding:0.4rem 0.25rem;text-align:left;font-weight:500;">{{ team_flag(t.team) }} {{ t.team }}</td>
         <td style="padding:0.4rem 0.25rem;text-align:center;">{{ t.w + t.d + t.l }}</td>
         <td style="padding:0.4rem 0.25rem;text-align:center;">{{ t.w }}</td>
         <td style="padding:0.4rem 0.25rem;text-align:center;">{{ t.d }}</td>

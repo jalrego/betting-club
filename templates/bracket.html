@@ -20,7 +20,7 @@
     <div style="background:#0f1119;border:1px solid #1a1e2a;border-radius:6px;padding:0.6rem 0.75rem;">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;font-size:0.85rem;">
         <span style="font-weight:500;{% if m.home_team == 'TBD' %}color:#535768;font-style:italic;{% endif %}">
-          {% if m.home_team == 'TBD' %}TBD{% else %}{{ m.home_team }}{% endif %}
+          {% if m.home_team == 'TBD' %}TBD{% else %}{{ team_flag(m.home_team) }} {{ m.home_team }}{% endif %}
         </span>
         <span style="min-width:2.5rem;text-align:center;font-weight:700;">
           {% if m.home_score is not none and m.away_score is not none %}
@@ -32,7 +32,7 @@
           {% endif %}
         </span>
         <span style="font-weight:500;{% if m.away_team == 'TBD' %}color:#535768;font-style:italic;{% endif %}">
-          {% if m.away_team == 'TBD' %}TBD{% else %}{{ m.away_team }}{% endif %}
+          {% if m.away_team == 'TBD' %}TBD{% else %}{{ team_flag(m.away_team) }} {{ m.away_team }}{% endif %}
         </span>
       </div>
       <div style="font-size:0.6rem;color:#535768;margin-top:0.25rem;">{{ m.date[-5:] }} {{ m.match_time }}</div>

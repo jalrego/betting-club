@@ -23,6 +23,34 @@ DATABASE = os.path.join(app.root_path, 'betting.db')
 STARTING_BALANCE = 1000  # €10.00 in cents
 ROUNDS = ['Group Stage', 'Round of 16', 'Quarter-final', 'Semi-final', 'Final']
 
+# ISO 3166-1 alpha-2 team -> flag helper
+COUNTRY_CODES = {
+    'Algeria': 'DZ', 'Argentina': 'AR', 'Australia': 'AU', 'Austria': 'AT',
+    'Belgium': 'BE', 'Bosnia-Herzegovina': 'BA', 'Brazil': 'BR', 'Canada': 'CA',
+    'Cape Verde Islands': 'CV', 'Colombia': 'CO', 'Congo DR': 'CD', 'Croatia': 'HR',
+    'Curaçao': 'CW', 'Czech Republic': 'CZ', 'Ecuador': 'EC', 'Egypt': 'EG',
+    'England': 'GB-ENG', 'France': 'FR', 'Germany': 'DE', 'Ghana': 'GH',
+    'Haiti': 'HT', 'Iran': 'IR', 'Iraq': 'IQ', 'Ivory Coast': 'CI',
+    'Japan': 'JP', 'Jordan': 'JO', 'Mexico': 'MX', 'Morocco': 'MA',
+    'Netherlands': 'NL', 'New Zealand': 'NZ', 'Norway': 'NO', 'Panama': 'PA',
+    'Paraguay': 'PY', 'Portugal': 'PT', 'Qatar': 'QA', 'Saudi Arabia': 'SA',
+    'Scotland': 'GB-SCT', 'Senegal': 'SN', 'South Africa': 'ZA', 'South Korea': 'KR',
+    'Spain': 'ES', 'Sweden': 'SE', 'Switzerland': 'CH', 'Tunisia': 'TN',
+    'Turkey': 'TR', 'United States': 'US', 'Uruguay': 'UY', 'Uzbekistan': 'UZ',
+}
+
+
+def team_flag(team_name):
+    code = COUNTRY_CODES.get(team_name)
+    if not code or code == 'TBD':
+        return ''
+    # Regional indicators for GB-ENG / GB-SCT
+    if code == 'GB-ENG':
+        return '\U0001F3F4\U000E0067\U000E0062\U000E0065\U000E006E\U000E0067\U000E007F'
+    if code == 'GB-SCT':
+        return '\U0001F3F4\U000E0067\U000E0062\U000E0073\U000E0063\U000E0074\U000E007F'
+    return ''.join(chr(0x1F1E6 + ord(c) - ord('A')) for c in code.upper())
+
 
 def get_db():
     if 'db' in g:
@@ -476,6 +504,11 @@ def admin_required(f):
 @app.teardown_appcontext
 def teardown(exception):
     close_db()
+
+
+@app.context_processor
+def inject_globals():
+    return dict(team_flag=team_flag)
 
 
 @app.errorhandler(500)

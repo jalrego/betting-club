@@ -113,7 +113,7 @@
         <select name="match_number" id="match_number" required style="display:none;">
           <option value="">Select match</option>
           {% for f in fixtures %}
-          <option value="{{ f.match_number }}" data-round="{{ f.round }}" data-home="{{ f.home_team }}" data-away="{{ f.away_team }}" data-date="{{ f.date }}">
+          <option value="{{ f.match_number }}" data-round="{{ f.round }}" data-home="{{ f.home_team }}" data-away="{{ f.away_team }}" data-date="{{ f.date }}" data-flag="{{ team_flag(f.home_team) }} {{ team_flag(f.away_team) }}">
             {{ f.home_team }} vs {{ f.away_team }}
           </option>
           {% endfor %}
@@ -184,9 +184,10 @@
 <div class="card">
   <h2>📊 Recent Activity</h2>
   <div style="margin-top: 0.5rem;">
+  {% set colors = ['#6366f1','#22c55e','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#ec4899','#10b981'] %}
   {% for a in activity %}
     <div style="display:flex;align-items:center;gap:0.75rem;padding:0.5rem 0;border-bottom:1px solid #1a1e2a;font-size:0.85rem;">
-      <span style="font-weight:600;color:#fbbf24;white-space:nowrap;">{{ a.username }}</span>
+      <span class="avatar avatar-sm" style="background:{{ colors[a.username|length % colors|length] }};">{{ a.username[:1]|upper }}</span>
       <span style="color:#7f8494;flex:1;">
         bet €{{ "%.2f"|format(a.stake) }}
         {% if a.bet_type == 'multi' %}multi{% endif %}
@@ -194,13 +195,13 @@
       </span>
       <span style="white-space:nowrap;">
         {% if a.result == 'pending' %}
-          <span class="text-muted">⏳</span>
+          <span class="badge badge-pending">Pending</span>
         {% elif a.result == 'won' %}
-          <span class="green">✅</span>
+          <span class="badge badge-won">Won</span>
         {% elif a.result == 'lost' %}
-          <span class="red">❌</span>
+          <span class="badge badge-lost">Lost</span>
         {% elif a.result == 'cashout' %}
-          <span class="gold">💵</span>
+          <span class="badge badge-cashed">Cashed</span>
         {% endif %}
       </span>
     </div>
@@ -257,13 +258,13 @@
         <td class="text-sm">{{ bet.pick }}</td>
         <td>
           {% if bet.result == 'pending' %}
-            <span class="text-muted">⏳ Pending</span>
+            <span class="badge badge-pending">Pending</span>
           {% elif bet.result == 'won' %}
-            <span class="green">✅ Won</span>
+            <span class="badge badge-won">Won</span>
           {% elif bet.result == 'lost' %}
-            <span class="red">❌ Lost</span>
+            <span class="badge badge-lost">Lost</span>
           {% elif bet.result == 'cashout' %}
-            <span class="gold">💵 Cashed</span>
+            <span class="badge badge-cashed">Cashed</span>
           {% endif %}
         </td>
         <td>
@@ -316,7 +317,8 @@ function filterMatches() {
     var away = opt.getAttribute('data-away') || '';
     var round = opt.getAttribute('data-round') || '';
     var date = opt.getAttribute('data-date') || '';
-    var text = home + ' vs ' + away + ' (' + round + ', ' + date.slice(-5) + ')';
+    var flag = opt.getAttribute('data-flag') || '';
+    var text = flag + ' ' + home + ' vs ' + away + ' (' + round + ', ' + date.slice(-5) + ')';
     if (q.length === 0 || text.toLowerCase().indexOf(q) !== -1) {
       found++;
       var div = document.createElement('div');
@@ -353,7 +355,7 @@ function addMultiLeg() {
   var leg = document.createElement('div');
   leg.className = 'multi-leg';
   leg.innerHTML =
-    '<div style="position:relative;flex:1;">' +
+    '<div style="position:relative;flex:2;">' +
     '<input type="text" class="multiMatchSearch input" placeholder="Search match..." autocomplete="off" oninput="filterMultiMatches(this)" onfocus="filterMultiMatches(this)" onblur="setTimeout(function(){this.parentNode.querySelector(\'.multiDropdown\').style.display=\'none\'},200)">' +
     '<input type="hidden" name="multi_match[]" class="multiMatchInfo" value="">' +
     '<input type="hidden" name="multi_match_number[]" class="multiMatchNumber" value="">' +
@@ -377,7 +379,8 @@ function filterMultiMatches(el) {
     var away = opt.getAttribute('data-away') || '';
     var round = opt.getAttribute('data-round') || '';
     var date = opt.getAttribute('data-date') || '';
-    var text = home + ' vs ' + away + ' (' + round + ', ' + date.slice(-5) + ')';
+    var flag = opt.getAttribute('data-flag') || '';
+    var text = flag + ' ' + home + ' vs ' + away + ' (' + round + ', ' + date.slice(-5) + ')';
     if (q.length === 0 || text.toLowerCase().indexOf(q) !== -1) {
       found++;
       var div = document.createElement('div');

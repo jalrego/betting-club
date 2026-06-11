@@ -6,6 +6,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="{{ url_for('static', filename='wc26-logo.png') }}" type="image/png">
   <title>FIFA World Cup 2026 — Betting Club</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -61,10 +62,12 @@
       padding: 1.5rem;
       margin-bottom: 1rem;
       border: 1px solid #1e2230;
-      transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+      transition: border-color 0.2s, box-shadow 0.3s, transform 0.2s;
     }
     .card:hover {
       border-color: #2a2f42;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+      transform: translateY(-1px);
     }
     .card h2 { margin-bottom: 0.75rem; font-size: 0.75rem; color: #fbbf24; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600; }
     .card-green { border-left: 3px solid #22c55e; }
@@ -144,12 +147,21 @@
     ::selection { background: #fbbf24; color: #0a0c12; }
     h1 { font-size: 1.3rem; font-weight: 700; font-family: 'Oswald', sans-serif; letter-spacing: 0.02em; }
     .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 0.75rem; }
-    .toggle-row { display: flex; justify-content: center; gap: 0; margin-bottom: 1.25rem; background: #0a0c12; border-radius: 8px; padding: 3px; border: 1px solid #1e2230; }
-    .toggle-row label { display: flex; align-items: center; gap: 0.4rem; cursor: pointer; font-size: 0.85rem; margin-bottom: 0; padding: 0.4rem 1.2rem; border-radius: 6px; transition: background 0.15s, color 0.15s; color: #7f8494; font-weight: 500; }
+    .toggle-row {
+      display: flex; justify-content: center; gap: 0; margin-bottom: 1.25rem;
+      background: #0a0c12; border-radius: 10px; padding: 3px;
+      border: 1px solid #1e2230; position: relative;
+    }
+    .toggle-row label {
+      display: flex; align-items: center; justify-content: center; gap: 0.35rem;
+      cursor: pointer; font-size: 0.8rem; margin-bottom: 0; padding: 0.5rem 1.5rem;
+      border-radius: 8px; transition: background 0.2s, color 0.2s; color: #7f8494; font-weight: 600;
+      position: relative; z-index: 1; letter-spacing: 0.02em; min-width: 90px;
+    }
     .toggle-row input[type="radio"] { appearance: none; -webkit-appearance: none; width: 0; height: 0; margin: 0; padding: 0; position: absolute; }
-    .toggle-row input[type="radio"]:checked + .toggle-label,
-    .toggle-row input[type="radio"]:checked ~ .toggle-label { background: #fbbf24; color: #0a0c12; }
-    .toggle-row label:has(input:checked) { background: #fbbf24; color: #0a0c12; }
+    .toggle-row label:has(input:checked) {
+      background: #fbbf24; color: #0a0c12; box-shadow: 0 2px 8px rgba(251,191,36,0.25);
+    }
     .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; border-top: 1px solid #1a1e2a; }
     select.input { width:100%; padding:0.6rem 0.75rem; background:#0a0c12; border:1px solid #1e2230; border-radius:8px; color:#e1e4ed; font-size:0.9rem; margin-bottom:0.75rem; }
     select.input:focus { outline: none; border-color: #fbbf24; box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.1); }
@@ -162,6 +174,23 @@
     }
     .welcome-banner h1 { font-size: 1.6rem; margin-bottom: 0.25rem; }
     .welcome-banner p { font-size: 0.85rem; color: #7f8494; }
+    /* Badges */
+    .badge {
+      display: inline-flex; align-items: center; gap: 0.25rem;
+      padding: 0.2rem 0.6rem; border-radius: 999px; font-size: 0.7rem;
+      font-weight: 600; letter-spacing: 0.02em;
+    }
+    .badge-pending { background: rgba(251,191,36,0.12); color: #fbbf24; }
+    .badge-won { background: rgba(34,197,94,0.12); color: #22c55e; }
+    .badge-lost { background: rgba(239,68,68,0.12); color: #ef4444; }
+    .badge-cashed { background: rgba(251,191,36,0.12); color: #fbbf24; }
+    /* Avatar */
+    .avatar {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 28px; height: 28px; border-radius: 50%;
+      font-size: 0.75rem; font-weight: 700; color: #fff; flex-shrink: 0;
+    }
+    .avatar-sm { width: 22px; height: 22px; font-size: 0.6rem; }
     @media (max-width: 640px) {
       nav { flex-direction: column; gap: 0.5rem; padding: 0.75rem 1rem; }
       nav div { display: flex; flex-wrap: wrap; justify-content: center; }
@@ -190,7 +219,12 @@
     </div>
     <div>
       {% if session.user_id %}
-        <span class="text-muted text-sm">👤 {{ session.username }}</span>
+        {% set colors = ['#6366f1','#22c55e','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#ec4899','#10b981'] %}
+        {% set idx = (session.username|string|length * 7 + loop.index0 if loop is defined else 3) % colors|length %}
+        <span class="avatar" style="background:{{ colors[session.username|length % colors|length] }};">
+          {{ session.username[:1]|upper }}
+        </span>
+        <span class="text-muted text-sm">{{ session.username }}</span>
         <a href="{{ url_for('dashboard') }}">Dashboard</a>
         <a href="{{ url_for('fixtures') }}">Fixtures</a>
         <a href="{{ url_for('standings') }}">Standings</a>
