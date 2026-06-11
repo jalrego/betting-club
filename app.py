@@ -65,15 +65,14 @@ CITY_OFFSETS = {
 }
 
 
-def lisbon_time(date_str, time_str, city):
-    """Convert venue local time to Lisbon/London time (UTC+1)."""
+def lisbon_time(date_str, time_str, city=None):
+    """Convert UTC time (from wheniskickoff.com) to Lisbon/London time (UTC+1)."""
     if not time_str or not date_str:
         return date_str, time_str or ''
     try:
         from datetime import datetime, timedelta
         dt = datetime.strptime(f'{date_str} {time_str}', '%Y-%m-%d %H:%M')
-        offset = CITY_OFFSETS.get(city, -4)
-        lisbon_dt = dt - timedelta(hours=offset) + timedelta(hours=1)
+        lisbon_dt = dt + timedelta(hours=1)
         return lisbon_dt.strftime('%Y-%m-%d'), lisbon_dt.strftime('%H:%M')
     except (ValueError, TypeError):
         return date_str, time_str
