@@ -225,6 +225,16 @@ def init_db():
             db.commit()
         except Exception:
             db.rollback()
+
+        # migration: add match_number to bets
+        try:
+            if is_pg():
+                query("ALTER TABLE bets ADD COLUMN IF NOT EXISTS match_number INTEGER")
+            else:
+                query("ALTER TABLE bets ADD COLUMN match_number INTEGER")
+            db.commit()
+        except Exception:
+            db.rollback()
     except Exception as e:
         logging.error(f"init_db failed: {e}")
         raise
@@ -589,6 +599,15 @@ def dashboard():
             d = dict(r)
             d['stake'] = d['stake'] / 100.0
             activity.append(d)
+        # fixtures for dropdown
+        fixtures_list = query('SELECT match_number, home_team, away_team, round, date FROM fixtures ORDER BY match_number').fetchall()
+        fixtures_for_select = [dict(r) for r in fixtures_list]
+        # balance history for sparkline
+        hist = query(
+            f'SELECT balance, created_at FROM balance_records WHERE user_id = {p()} ORDER BY created_at ASC',
+            (user_id,)
+        ).fetchall()
+        balance_history = [dict(r) for r in hist]
     except Exception as e:
         logging.error(f"dashboard error: {e}")
         raise
@@ -598,6 +617,8 @@ def dashboard():
                            bets=bets,
                            stats=stats,
                            activity=activity,
+                           fixtures=fixtures_for_select,
+                           balance_history=balance_history,
                            rounds=ROUNDS,
                            starting=STARTING_BALANCE / 100.0)
 
@@ -654,11 +675,22 @@ def new_bet():
         return redirect(url_for('dashboard'))
 
     query(
-        'INSERT INTO bets (user_id, match_info, round, stake, odds, pick, bet_type, selections) '
-        f'VALUES ({p()}, {p()}, {p()}, {p()}, {p()}, {p()}, {p()}, {p()})',
-        (session['user_id'], match_info, round_, stake, odds, pick, bet_type, selections_json)
+        'INSERT INTO bets (user_id, match_info, round, stake, odds, pick, bet_type, selections, match_number) '
+        f'VALUES ({p()}, {p()}, {p()}, {p()}, {p()}, {p()}, {p()}, {p()}, {p()})',
+        (session['user_id'], match_info, round_, stake, odds, pick, bet_type, selections_json,
+         request.form.get('match_number', type=int))
     )
     db.commit()
+    # record balance after bet placed
+    try:
+        bal = user_balance(session['user_id'])
+        query(
+            f'INSERT INTO balance_records (user_id, balance, notes) VALUES ({p()}, {p()}, {p()})',
+            (session['user_id'], bal, f"Bet placed: {match_info}")
+        )
+        db.commit()
+    except Exception:
+        db.rollback()
 
     flash('Bet placed!', 'success')
     return redirect(url_for('dashboard'))
@@ -691,6 +723,17 @@ def settle_bet(bet_id):
         (result, bet_id)
     )
     db.commit()
+
+    # record balance after settlement
+    try:
+        bal = user_balance(session['user_id'])
+        query(
+            f'INSERT INTO balance_records (user_id, balance, notes) VALUES ({p()}, {p()}, {p()})',
+            (session['user_id'], bal, f"Bet {result}: {bet['match_info']}")
+        )
+        db.commit()
+    except Exception:
+        db.rollback()
 
     flash('Bet result updated!', 'success')
     return redirect(url_for('dashboard'))

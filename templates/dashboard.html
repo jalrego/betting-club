@@ -57,6 +57,41 @@
   </div>
 </div>
 
+{% if balance_history|length > 1 %}
+<div class="card" style="padding:1rem;">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem;">
+    <span style="font-size:0.85rem;color:#7f8494;">Balance History</span>
+  </div>
+  <svg viewBox="0 0 200 40" style="width:100%;height:40px;display:block;">
+    {% set min_bal = balance_history|map(attribute='balance')|min %}
+    {% set max_bal = balance_history|map(attribute='balance')|max %}
+    {% set range = (max_bal - min_bal) or 1 %}
+    {% set count = balance_history|length %}
+    <polyline fill="none" stroke="#fbbf24" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+      points="
+      {% for r in balance_history %}
+        {% set x = (loop.index0 / (count - 1)) * 196 + 2 %}
+        {% set y = 36 - ((r.balance - min_bal) / range) * 32 %}
+        {{ "%.1f"|format(x) }},{{ "%.1f"|format(y) }}
+        {% if not loop.last %} {% endif %}
+      {% endfor %}
+    "/>
+    {% set first = balance_history[0].balance %}
+    {% set last = balance_history[-1].balance %}
+    {% if last > first %}
+      <polygon fill="url(#sparkFill)" opacity="0.1"
+        points="2,36 {% for r in balance_history %}{% set x = (loop.index0 / (count - 1)) * 196 + 2 %}{% set y = 36 - ((r.balance - min_bal) / range) * 32 %}{{ "%.1f"|format(x) }},{{ "%.1f"|format(y) }} {% endfor %}198,36 2,36"/>
+    {% endif %}
+  </svg>
+  <defs>
+    <linearGradient id="sparkFill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fbbf24"/>
+      <stop offset="100%" stop-color="#fbbf24" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+</div>
+{% endif %}
+
 <div class="card">
   <h2>🎯 Place a Bet</h2>
 
@@ -76,7 +111,15 @@
       <div class="form-grid">
         <div>
           <label for="match_info">Match</label>
-          <input type="text" name="match_info" id="match_info" placeholder="e.g. Portugal vs Brazil">
+          <select name="match_number" id="match_number" required class="input">
+            <option value="">Select match</option>
+            {% for f in fixtures %}
+            <option value="{{ f.match_number }}" data-round="{{ f.round }}" data-home="{{ f.home_team }}" data-away="{{ f.away_team }}">
+              {{ f.home_team }} vs {{ f.away_team }} ({{ f.round }})
+            </option>
+            {% endfor %}
+          </select>
+          <input type="hidden" name="match_info" id="match_info">
         </div>
         <div>
           <label for="round">Round</label>
@@ -264,6 +307,25 @@ function toggleBetType() {
   singles.forEach(function(el) { el.required = !isMulti; });
   multis.forEach(function(el) { el.required = isMulti; });
 }
+
+// populate match_info hidden field from dropdown
+document.addEventListener('DOMContentLoaded', function() {
+  var sel = document.getElementById('match_number');
+  if (sel) {
+    sel.addEventListener('change', function() {
+      var opt = sel.options[sel.selectedIndex];
+      var info = document.getElementById('match_info');
+      if (opt.value) {
+        info.value = opt.getAttribute('data-home') + ' vs ' + opt.getAttribute('data-away');
+        // auto-set round
+        var roundSel = document.getElementById('round');
+        if (roundSel) roundSel.value = opt.getAttribute('data-round');
+      } else {
+        info.value = '';
+      }
+    });
+  }
+});
 
 function addLeg() {
   var container = document.getElementById('multiLegs');
