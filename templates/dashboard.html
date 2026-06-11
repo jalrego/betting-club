@@ -123,7 +123,10 @@
 
     <div id="singleFields">
       <div style="position:relative;margin-bottom:0.75rem;">
-        <input type="text" id="matchSearch" class="input" placeholder="Search team or date..." autocomplete="off" oninput="filterMatches()" onfocus="filterMatches()" onblur="setTimeout(function(){document.getElementById('matchDropdown').style.display='none'},200)">
+        <div style="position:relative;">
+          <input type="text" id="matchSearch" class="input" placeholder="Search match..." autocomplete="off" oninput="filterMatches()" onfocus="showAllMatches()" onclick="showAllMatches()" onblur="setTimeout(function(){document.getElementById('matchDropdown').style.display='none'},200)" style="padding-right:2rem;">
+          <span style="position:absolute;right:0.6rem;top:50%;transform:translateY(-50%);color:#535768;pointer-events:none;font-size:0.7rem;">▼</span>
+        </div>
         <select name="match_number" id="match_number" style="display:none;">
           <option value="">Select match</option>
           {% for f in fixtures %}
@@ -133,7 +136,7 @@
           {% endfor %}
         </select>
         <input type="hidden" name="match_info" id="match_info">
-        <div id="matchDropdown" style="display:none;position:absolute;z-index:100;background:#13161e;border:1px solid #262a36;border-radius:6px;max-height:220px;overflow-y:auto;width:100%;left:0;top:100%;margin-top:2px;"></div>
+        <div id="matchDropdown" style="display:none;position:absolute;z-index:100;background:#13161e;border:1px solid #262a36;border-radius:8px;max-height:260px;overflow-y:auto;width:100%;left:0;top:100%;margin-top:4px;box-shadow:0 8px 24px rgba(0,0,0,0.4);"></div>
       </div>
       <div style="margin-bottom:0.5rem;">
         <label for="stakeSlider">Stake: &euro;<span id="stakeDisplay">5.00</span></label>
@@ -161,20 +164,26 @@
       <div id="multiLegs">
         <div class="multi-leg">
           <div style="position:relative;flex:2;">
-            <input type="text" class="multiMatchSearch input" placeholder="Search match..." autocomplete="off" oninput="filterMultiMatches(this)" onfocus="filterMultiMatches(this)" onblur="setTimeout(function(){this.parentNode.querySelector('.multiDropdown').style.display='none'},200)">
+            <div style="position:relative;">
+              <input type="text" class="multiMatchSearch input" placeholder="Search match..." autocomplete="off" oninput="filterMultiMatches(this)" onfocus="showAllMultiMatches(this)" onclick="showAllMultiMatches(this)" onblur="setTimeout(function(){this.parentNode.parentNode.querySelector('.multiDropdown').style.display='none'},200)" style="padding-right:2rem;">
+              <span style="position:absolute;right:0.6rem;top:50%;transform:translateY(-50%);color:#535768;pointer-events:none;font-size:0.7rem;">▼</span>
+            </div>
             <input type="hidden" name="multi_match[]" class="multiMatchInfo" value="">
             <input type="hidden" name="multi_match_number[]" class="multiMatchNumber" value="">
-            <div class="multiDropdown" style="display:none;position:absolute;z-index:100;background:#13161e;border:1px solid #262a36;border-radius:6px;max-height:180px;overflow-y:auto;width:100%;left:0;top:100%;margin-top:2px;"></div>
+            <div class="multiDropdown" style="display:none;position:absolute;z-index:100;background:#13161e;border:1px solid #262a36;border-radius:8px;max-height:220px;overflow-y:auto;width:100%;left:0;top:100%;margin-top:4px;box-shadow:0 8px 24px rgba(0,0,0,0.4);"></div>
           </div>
           <input type="text" name="multi_pick[]" placeholder="Pick" class="input" style="flex:1;">
           <button type="button" onclick="removeLeg(this)" class="btn btn-secondary btn-sm">&times;</button>
         </div>
         <div class="multi-leg">
           <div style="position:relative;flex:2;">
-            <input type="text" class="multiMatchSearch input" placeholder="Search match..." autocomplete="off" oninput="filterMultiMatches(this)" onfocus="filterMultiMatches(this)" onblur="setTimeout(function(){this.parentNode.querySelector('.multiDropdown').style.display='none'},200)">
+            <div style="position:relative;">
+              <input type="text" class="multiMatchSearch input" placeholder="Search match..." autocomplete="off" oninput="filterMultiMatches(this)" onfocus="showAllMultiMatches(this)" onclick="showAllMultiMatches(this)" onblur="setTimeout(function(){this.parentNode.parentNode.querySelector('.multiDropdown').style.display='none'},200)" style="padding-right:2rem;">
+              <span style="position:absolute;right:0.6rem;top:50%;transform:translateY(-50%);color:#535768;pointer-events:none;font-size:0.7rem;">▼</span>
+            </div>
             <input type="hidden" name="multi_match[]" class="multiMatchInfo" value="">
             <input type="hidden" name="multi_match_number[]" class="multiMatchNumber" value="">
-            <div class="multiDropdown" style="display:none;position:absolute;z-index:100;background:#13161e;border:1px solid #262a36;border-radius:6px;max-height:180px;overflow-y:auto;width:100%;left:0;top:100%;margin-top:2px;"></div>
+            <div class="multiDropdown" style="display:none;position:absolute;z-index:100;background:#13161e;border:1px solid #262a36;border-radius:8px;max-height:220px;overflow-y:auto;width:100%;left:0;top:100%;margin-top:4px;box-shadow:0 8px 24px rgba(0,0,0,0.4);"></div>
           </div>
           <input type="text" name="multi_pick[]" placeholder="Pick" class="input" style="flex:1;">
           <button type="button" onclick="removeLeg(this)" class="btn btn-secondary btn-sm">&times;</button>
@@ -212,36 +221,6 @@
     </div>
   </div>
 </div>
-
-{% if activity %}
-<div class="card">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem;">
-    <h2 style="margin:0;">📊 Recent Activity</h2>
-  </div>
-  {% set colors = ['#6366f1','#22c55e','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#ec4899','#10b981'] %}
-  {% for a in activity %}
-    <div style="display:flex;align-items:center;gap:0.75rem;padding:0.5rem 0;border-bottom:1px solid #1a1e2a;font-size:0.85rem;">
-      <span class="avatar avatar-sm" style="background:{{ colors[a.username|length % colors|length] }};">{{ a.username[:1]|upper }}</span>
-      <span style="color:#7f8494;flex:1;">
-        bet €{{ "%.2f"|format(a.stake) }}
-        {% if a.bet_type == 'multi' %}multi{% endif %}
-        on <strong>{{ a.match_info }}</strong>
-      </span>
-      <span style="white-space:nowrap;">
-        {% if a.result == 'pending' %}
-          <span class="badge badge-pending">Pending</span>
-        {% elif a.result == 'won' %}
-          <span class="badge badge-won">Won</span>
-        {% elif a.result == 'lost' %}
-          <span class="badge badge-lost">Lost</span>
-        {% elif a.result == 'cashout' %}
-          <span class="badge badge-cashed">Cashed</span>
-        {% endif %}
-      </span>
-    </div>
-  {% endfor %}
-</div>
-{% endif %}
 
 {% if bets %}
 <div class="card" style="padding: 0;">
@@ -331,6 +310,36 @@
 </div>
 {% endif %}
 
+{% if activity %}
+<div class="card">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem;">
+    <h2 style="margin:0;">📊 Recent Activity</h2>
+  </div>
+  {% set colors = ['#6366f1','#22c55e','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#ec4899','#10b981'] %}
+  {% for a in activity %}
+    <div style="display:flex;align-items:center;gap:0.75rem;padding:0.5rem 0;border-bottom:1px solid #1a1e2a;font-size:0.85rem;">
+      <span class="avatar avatar-sm" style="background:{{ colors[a.username|length % colors|length] }};">{{ a.username[:1]|upper }}</span>
+      <span style="color:#7f8494;flex:1;">
+        bet €{{ "%.2f"|format(a.stake) }}
+        {% if a.bet_type == 'multi' %}multi{% endif %}
+        on <strong>{{ a.match_info }}</strong>
+      </span>
+      <span style="white-space:nowrap;">
+        {% if a.result == 'pending' %}
+          <span class="badge badge-pending">Pending</span>
+        {% elif a.result == 'won' %}
+          <span class="badge badge-won">Won</span>
+        {% elif a.result == 'lost' %}
+          <span class="badge badge-lost">Lost</span>
+        {% elif a.result == 'cashout' %}
+          <span class="badge badge-cashed">Cashed</span>
+        {% endif %}
+      </span>
+    </div>
+  {% endfor %}
+</div>
+{% endif %}
+
 <script>
 function toggleBetType() {
   var isMulti = document.querySelector('input[name="bet_type_switch"]:checked').value === 'multi';
@@ -342,6 +351,19 @@ function toggleBetType() {
   var multis = document.querySelectorAll('#multiFields input, #multiFields select');
   singles.forEach(function(el) { el.required = !isMulti; });
   multis.forEach(function(el) { el.required = isMulti; });
+}
+
+function showAllMatches() {
+  var sel = document.getElementById('match_number');
+  var dd = document.getElementById('matchDropdown');
+  if (dd.style.display === 'block') return;
+  dd.innerHTML = '';
+  for (var i = 0; i < sel.options.length; i++) {
+    var opt = sel.options[i];
+    if (!opt.value) continue;
+    renderMatchOption(opt, '', dd);
+  }
+  dd.style.display = dd.children.length > 0 ? 'block' : 'none';
 }
 
 function filterMatches() {
@@ -361,27 +383,44 @@ function filterMatches() {
     var text = flag + ' ' + home + ' vs ' + away + ' (' + round + ', ' + date.slice(-5) + ')';
     if (q.length === 0 || text.toLowerCase().indexOf(q) !== -1) {
       found++;
-      var div = document.createElement('div');
-      div.textContent = text;
-      div.style.cssText = 'padding:0.5rem 0.75rem;cursor:pointer;font-size:0.85rem;border-bottom:1px solid #1a1e2a;';
-      div.onmouseover = function(){this.style.background='#1a1e2a';};
-      div.onmouseout = function(){this.style.background='';};
-      div.onclick = (function(opt, text, home, away) {
-        return function() {
-          document.getElementById('matchSearch').value = text;
-          document.getElementById('match_number').value = opt.value;
-          document.getElementById('match_info').value = home + ' vs ' + away;
-          dd.style.display = 'none';
-        };
-      })(opt, text, home, away);
-      dd.appendChild(div);
+      renderMatchOption(opt, q, dd);
     }
   }
   dd.style.display = found > 0 && q.length > 0 ? 'block' : 'none';
   if (!found && q.length > 0) {
-    dd.innerHTML = '<div style="padding:0.5rem 0.75rem;color:#535768;font-size:0.85rem;">No matches found</div>';
+    dd.innerHTML = '<div style="padding:0.75rem;color:#535768;font-size:0.85rem;text-align:center;">No matches found</div>';
     dd.style.display = 'block';
   }
+}
+
+function renderMatchOption(opt, q, dd) {
+  var home = opt.getAttribute('data-home') || '';
+  var away = opt.getAttribute('data-away') || '';
+  var round = opt.getAttribute('data-round') || '';
+  var date = opt.getAttribute('data-date') || '';
+  var flag = opt.getAttribute('data-flag') || '';
+  var roundLabel = round;
+  if (round === 'Group Stage') roundLabel = roundLabel.replace('Group Stage', 'GS');
+  
+  var div = document.createElement('div');
+  div.style.cssText = 'display:flex;align-items:center;gap:0.5rem;padding:0.5rem 0.75rem;cursor:pointer;font-size:0.85rem;border-bottom:1px solid #1a1e2a;transition:background 0.1s;';
+  div.onmouseover = function(){this.style.background='#1a1e2a';};
+  div.onmouseout = function(){this.style.background='';};
+
+  div.innerHTML = '<span style="flex-shrink:0;font-size:1.1rem;">' + flag + '</span>' +
+    '<span style="flex:1;"><strong>' + home + '</strong> vs <strong>' + away + '</strong></span>' +
+    '<span style="font-size:0.7rem;color:#535768;">' + roundLabel + ' · ' + date.slice(-5) + '</span>';
+
+  var fullText = flag + ' ' + home + ' vs ' + away + ' (' + round + ', ' + date.slice(-5) + ')';
+  div.onclick = (function(opt, home, away, fullText) {
+    return function() {
+      document.getElementById('matchSearch').value = fullText;
+      document.getElementById('match_number').value = opt.value;
+      document.getElementById('match_info').value = home + ' vs ' + away;
+      dd.style.display = 'none';
+    };
+  })(opt, home, away, fullText);
+  dd.appendChild(div);
 }
 
 function showConfirm(event) {
@@ -441,10 +480,13 @@ function addMultiLeg() {
   leg.className = 'multi-leg';
   leg.innerHTML =
     '<div style="position:relative;flex:2;">' +
-    '<input type="text" class="multiMatchSearch input" placeholder="Search match..." autocomplete="off" oninput="filterMultiMatches(this)" onfocus="filterMultiMatches(this)" onblur="setTimeout(function(){this.parentNode.querySelector(\'.multiDropdown\').style.display=\'none\'},200)">' +
+    '<div style="position:relative;">' +
+    '<input type="text" class="multiMatchSearch input" placeholder="Search match..." autocomplete="off" oninput="filterMultiMatches(this)" onfocus="showAllMultiMatches(this)" onclick="showAllMultiMatches(this)" onblur="setTimeout(function(){this.parentNode.parentNode.querySelector(\'.multiDropdown\').style.display=\'none\'},200)" style="padding-right:2rem;">' +
+    '<span style="position:absolute;right:0.6rem;top:50%;transform:translateY(-50%);color:#535768;pointer-events:none;font-size:0.7rem;">▼</span>' +
+    '</div>' +
     '<input type="hidden" name="multi_match[]" class="multiMatchInfo" value="">' +
     '<input type="hidden" name="multi_match_number[]" class="multiMatchNumber" value="">' +
-    '<div class="multiDropdown" style="display:none;position:absolute;z-index:100;background:#13161e;border:1px solid #262a36;border-radius:6px;max-height:180px;overflow-y:auto;width:100%;left:0;top:100%;margin-top:2px;"></div>' +
+    '<div class="multiDropdown" style="display:none;position:absolute;z-index:100;background:#13161e;border:1px solid #262a36;border-radius:8px;max-height:220px;overflow-y:auto;width:100%;left:0;top:100%;margin-top:4px;box-shadow:0 8px 24px rgba(0,0,0,0.4);"></div>' +
     '</div>' +
     '<input type="text" name="multi_pick[]" placeholder="Pick" class="input" style="flex:1;">' +
     '<button type="button" onclick="removeLeg(this)" class="btn btn-secondary btn-sm">&times;</button>';
@@ -469,10 +511,13 @@ function filterMultiMatches(el) {
     if (q.length === 0 || text.toLowerCase().indexOf(q) !== -1) {
       found++;
       var div = document.createElement('div');
-      div.textContent = text;
-      div.style.cssText = 'padding:0.5rem 0.75rem;cursor:pointer;font-size:0.85rem;border-bottom:1px solid #1a1e2a;';
+      var roundLabel = round === 'Group Stage' ? 'GS' : round;
+      div.style.cssText = 'display:flex;align-items:center;gap:0.5rem;padding:0.5rem 0.75rem;cursor:pointer;font-size:0.85rem;border-bottom:1px solid #1a1e2a;transition:background 0.1s;';
       div.onmouseover = function(){this.style.background='#1a1e2a';};
       div.onmouseout = function(){this.style.background='';};
+      div.innerHTML = '<span style="flex-shrink:0;font-size:1.1rem;">' + flag + '</span>' +
+        '<span style="flex:1;"><strong>' + home + '</strong> vs <strong>' + away + '</strong></span>' +
+        '<span style="font-size:0.7rem;color:#535768;">' + roundLabel + ' · ' + date.slice(-5) + '</span>';
       div.onclick = (function(searchEl, matchInfoEl, matchNumEl, opt, home, away, text) {
         return function() {
           searchEl.value = text;
@@ -486,9 +531,15 @@ function filterMultiMatches(el) {
   }
   dd.style.display = found && q.length > 0 ? 'block' : 'none';
   if (!found && q.length > 0) {
-    dd.innerHTML = '<div style="padding:0.5rem 0.75rem;color:#535768;font-size:0.85rem;">No matches found</div>';
+    dd.innerHTML = '<div style="padding:0.75rem;color:#535768;font-size:0.85rem;text-align:center;">No matches found</div>';
     dd.style.display = 'block';
   }
+}
+
+function showAllMultiMatches(el) {
+  var dd = el.parentNode.querySelector('.multiDropdown');
+  if (dd.style.display === 'block') return;
+  filterMultiMatches(el);
 }
 
 function removeLeg(btn) {
