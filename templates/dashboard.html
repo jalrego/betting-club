@@ -596,7 +596,7 @@ function addMultiLeg() {
 
 function filterMultiMatches(el) {
   var q = (el.value || '').toLowerCase();
-  var dd = el.parentNode.querySelector('.multiDropdown');
+  var dd = el.parentNode.parentNode.querySelector('.multiDropdown');
   var sel = document.getElementById('match_number');
   dd.innerHTML = '';
   var found = 0;
@@ -614,7 +614,7 @@ function filterMultiMatches(el) {
       renderMultiOption(opt, dd, el);
     }
   }
-  dd.style.display = found > 0 ? 'block' : 'none';
+  dd.style.display = found > 0 && q.length > 0 ? 'block' : 'none';
   if (!found && q.length > 0) {
     dd.innerHTML = '<div style="padding:0.75rem;color:#535768;font-size:0.85rem;text-align:center;">No matches found</div>';
     dd.style.display = 'block';
@@ -622,7 +622,7 @@ function filterMultiMatches(el) {
 }
 
 function showAllMultiMatches(el) {
-  var dd = el.parentNode.querySelector('.multiDropdown');
+  var dd = el.parentNode.parentNode.querySelector('.multiDropdown');
   if (dd.style.display === 'block') return;
   el.value = '';
   var sel = document.getElementById('match_number');
@@ -656,7 +656,7 @@ function renderMultiOption(opt, dd, el) {
       matchNumEl.value = opt.value;
       dd.style.display = 'none';
     };
-  })(el, el.parentNode.querySelector('.multiMatchInfo'), el.parentNode.querySelector('.multiMatchNumber'), opt, home, away, text);
+  })(el, el.parentNode.parentNode.querySelector('.multiMatchInfo'), el.parentNode.parentNode.querySelector('.multiMatchNumber'), opt, home, away, text);
   dd.appendChild(div);
 }
 
