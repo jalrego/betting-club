@@ -92,10 +92,18 @@
         {% if is_admin or is_owner %}
         <td>
           {% if bet.result == 'pending' %}
-          <form method="POST" action="{{ url_for('settle_bet', bet_id=bet.id) }}" style="display:inline">
-            <button name="result" value="won" class="btn btn-secondary btn-sm">Won</button>
-            <button name="result" value="lost" class="btn btn-secondary btn-sm">Lost</button>
-          </form>
+          <span class="settle-group" data-bet-id="{{ bet.id }}">
+            <button class="btn btn-secondary btn-sm settle-btn" onclick="showSettleOptions(this)">Settle</button>
+            <span class="settle-options" style="display:none;">
+              <form method="POST" action="{{ url_for('settle_bet', bet_id=bet.id) }}" style="display:inline">
+                <button name="result" value="won" class="btn btn-success btn-sm">Won</button>
+              </form>
+              <form method="POST" action="{{ url_for('settle_bet', bet_id=bet.id) }}" style="display:inline">
+                <button name="result" value="lost" class="btn btn-danger btn-sm">Lost</button>
+              </form>
+              <button class="btn btn-secondary btn-sm" onclick="hideSettleOptions(this)">Cancel</button>
+            </span>
+          </span>
           <button class="btn btn-secondary btn-sm" onclick="openEditModal(this)"
             data-id="{{ bet.id }}"
             data-match="{{ bet.match_info }}"

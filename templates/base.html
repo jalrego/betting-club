@@ -90,6 +90,8 @@
     .btn-secondary:hover { background: #2a2f42; }
     .btn-danger { background: #dc2626; color: #fff; }
     .btn-danger:hover { background: #ef4444; }
+    .btn-success { background: #16a34a; color: #fff; }
+    .btn-success:hover { background: #22c55e; }
     .btn-sm { padding: 0.2rem 0.5rem; font-size: 0.7rem; }
     label { display: block; margin-bottom: 0.3rem; font-size: 0.8rem; color: #7f8494; }
     input, textarea {
@@ -273,5 +275,27 @@
 
     {% block content %}{% endblock %}
   </div>
+<script>
+function showSettleOptions(btn) {
+  var group = btn.closest('.settle-group');
+  group.querySelector('.settle-btn').style.display = 'none';
+  group.querySelector('.settle-options').style.display = 'inline';
+}
+function hideSettleOptions(el) {
+  var group = el.closest('.settle-group');
+  group.querySelector('.settle-btn').style.display = '';
+  group.querySelector('.settle-options').style.display = 'none';
+}
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.settle-group')) {
+    document.querySelectorAll('.settle-group').forEach(function(g) {
+      var btn = g.querySelector('.settle-btn');
+      var opts = g.querySelector('.settle-options');
+      if (btn) btn.style.display = '';
+      if (opts) opts.style.display = 'none';
+    });
+  }
+});
+</script>
 </body>
 </html>

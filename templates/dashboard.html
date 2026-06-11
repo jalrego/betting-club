@@ -5,9 +5,12 @@
 .filter-btn { transition: background 0.15s, color 0.15s; }
 </style>
 
-<div class="welcome-banner" style="padding:1.5rem 1rem;">
-  <h1 style="margin:0;">FIFA World Cup 26</h1>
-  <p style="margin-top:0.25rem;">Canada &middot; Mexico &middot; USA &mdash; Group Stage is here</p>
+<div class="welcome-banner" style="padding:2rem 1rem;position:relative;overflow:hidden;">
+  <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 30% 50%, rgba(251,191,36,0.08), transparent 60%), radial-gradient(ellipse at 70% 50%, rgba(99,102,241,0.08), transparent 60%);"></div>
+  <div style="position:relative;">
+    <div style="font-family:'Oswald',sans-serif;font-size:2.2rem;font-weight:700;letter-spacing:0.02em;background:linear-gradient(135deg,#fbbf24,#eab308);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">FIFA WORLD CUP 26</div>
+    <p style="margin-top:0.35rem;color:#7f8494;font-size:0.9rem;">🇨🇦 · 🇲🇽 · 🇺🇸 &mdash; 104 matches · Group Stage</p>
+  </div>
 </div>
 
 <div class="stat-grid" style="grid-template-columns:1fr 1fr 1fr;margin-bottom:0.5rem;">
@@ -333,10 +336,18 @@
             data-stake="{{ bet.stake }}"
             data-odds="{{ bet.odds }}"
             data-match-number="{{ bet.match_number or '' }}">Edit</button>
-          <form method="POST" action="{{ url_for('settle_bet', bet_id=bet.id) }}" style="display:inline">
-            <button name="result" value="won" class="btn btn-secondary btn-sm">Won</button>
-            <button name="result" value="lost" class="btn btn-secondary btn-sm">Lost</button>
-          </form>
+          <span class="settle-group" data-bet-id="{{ bet.id }}">
+            <button class="btn btn-secondary btn-sm settle-btn" onclick="showSettleOptions(this)">Settle</button>
+            <span class="settle-options" style="display:none;">
+              <form method="POST" action="{{ url_for('settle_bet', bet_id=bet.id) }}" style="display:inline">
+                <button name="result" value="won" class="btn btn-success btn-sm">Won</button>
+              </form>
+              <form method="POST" action="{{ url_for('settle_bet', bet_id=bet.id) }}" style="display:inline">
+                <button name="result" value="lost" class="btn btn-danger btn-sm">Lost</button>
+              </form>
+              <button class="btn btn-secondary btn-sm" onclick="hideSettleOptions(this)">Cancel</button>
+            </span>
+          </span>
           {% endif %}
           <form method="POST" action="{{ url_for('delete_bet', bet_id=bet.id) }}" style="display:inline" onsubmit="return confirm('Delete this bet?')">
             <button class="btn btn-secondary btn-sm">&times;</button>
@@ -551,6 +562,7 @@ function openEditModal(btn) {
 function closeEditModal() {
   document.getElementById('editModal').style.display = 'none';
 }
+// sync match_info when selection changes
 // sync match_info when selection changes
 document.addEventListener('change', function(e) {
   if (e.target && e.target.id === 'editMatchSelect') {
