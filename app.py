@@ -448,6 +448,20 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated
 
+def admin_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if 'user_id' not in session:
+            flash('Please log in first.', 'warning')
+            return redirect(url_for('login'))
+        db = get_db()
+        user = query(f'SELECT username FROM users WHERE id = {p()}', (session['user_id'],)).fetchone()
+        if not user or user['username'] != 'Joao':
+            flash('Admin access required.', 'danger')
+            return redirect(url_for('dashboard'))
+        return f(*args, **kwargs)
+    return decorated
+
 
 @app.teardown_appcontext
 def teardown(exception):
@@ -564,6 +578,17 @@ def dashboard():
         balance = user_balance(user_id)
         bets = user_bets(user_id)
         stats = user_bet_stats(user_id)
+        # recent activity from all users
+        recent = query(
+            f'SELECT u.username, b.match_info, b.pick, b.stake, b.odds, b.result, b.bet_type, b.created_at '
+            f'FROM bets b JOIN users u ON b.user_id = u.id '
+            f'ORDER BY b.created_at DESC LIMIT 20'
+        ).fetchall()
+        activity = []
+        for r in recent:
+            d = dict(r)
+            d['stake'] = d['stake'] / 100.0
+            activity.append(d)
     except Exception as e:
         logging.error(f"dashboard error: {e}")
         raise
@@ -572,6 +597,7 @@ def dashboard():
                            balance=balance / 100.0,
                            bets=bets,
                            stats=stats,
+                           activity=activity,
                            rounds=ROUNDS,
                            starting=STARTING_BALANCE / 100.0)
 
@@ -699,38 +725,9 @@ def delete_bet(bet_id):
 
 @app.route('/admin')
 @login_required
+@admin_required
 def admin():
-    db = get_db()
-
-    try:
-        rows = query("""
-            SELECT
-                u.id,
-                u.username,
-                u.created_at AS joined_at,
-                (SELECT balance FROM balance_records
-                 WHERE user_id = u.id ORDER BY created_at DESC LIMIT 1
-                ) AS latest_balance,
-                (SELECT created_at FROM balance_records
-                  WHERE user_id = u.id ORDER BY created_at DESC LIMIT 1
-                ) AS last_updated,
-                (SELECT COUNT(*) FROM balance_records WHERE user_id = u.id
-                ) AS updates
-            FROM users u
-            ORDER BY u.username
-        """).fetchall()
-
-        players = []
-        for r in rows:
-            d = dict(r)
-            if d['latest_balance'] is not None:
-                d['latest_balance'] = d['latest_balance'] / 100.0
-            players.append(d)
-    except Exception as e:
-        logging.error(f"admin error: {e}")
-        raise
-
-    return render_template('admin.html', players=players, starting=STARTING_BALANCE / 100.0)
+    return redirect(url_for('leaderboard'))
 
 
 @app.route('/fixtures')
@@ -756,6 +753,65 @@ def fixtures():
         logging.error(f"fixtures error: {e}")
         raise
     return render_template('fixtures.html', fixtures=grouped, rounds=ROUNDS_FIXTURES)
+
+
+GROUP_NAMES = ['A','B','C','D','E','F','G','H','I','J','K','L']
+
+@app.route('/standings')
+@login_required
+def standings():
+    db = get_db()
+    groups = {}
+    for g in GROUP_NAMES:
+        rows = query(
+            'SELECT * FROM fixtures WHERE round = %s AND group_name = %s ORDER BY match_number'
+            if is_pg() else
+            'SELECT * FROM fixtures WHERE round = ? AND group_name = ? ORDER BY match_number',
+            ('Group Stage', g)
+        ).fetchall()
+        teams = {}
+        for r in rows:
+            for side in ('home', 'away'):
+                team = r[f'{side}_team']
+                if team not in teams:
+                    teams[team] = {'team': team, 'p': 0, 'w': 0, 'd': 0, 'l': 0, 'gf': 0, 'ga': 0}
+            if r['home_score'] is not None and r['away_score'] is not None:
+                h, a = r['home_score'], r['away_score']
+                teams[r['home_team']]['gf'] += h
+                teams[r['home_team']]['ga'] += a
+                teams[r['away_team']]['gf'] += a
+                teams[r['away_team']]['ga'] += h
+                if h > a:
+                    teams[r['home_team']]['w'] += 1
+                    teams[r['home_team']]['p'] += 3
+                    teams[r['away_team']]['l'] += 1
+                elif a > h:
+                    teams[r['away_team']]['w'] += 1
+                    teams[r['away_team']]['p'] += 3
+                    teams[r['home_team']]['l'] += 1
+                else:
+                    teams[r['home_team']]['d'] += 1
+                    teams[r['home_team']]['p'] += 1
+                    teams[r['away_team']]['d'] += 1
+                    teams[r['away_team']]['p'] += 1
+        sorted_teams = sorted(teams.values(), key=lambda t: (-t['p'], -(t['gf'] - t['ga']), -t['gf']))
+        groups[g] = sorted_teams
+    return render_template('standings.html', groups=groups)
+
+
+@app.route('/bracket')
+@login_required
+def bracket():
+    db = get_db()
+    rows = query(
+        "SELECT * FROM fixtures WHERE round != 'Group Stage' ORDER BY match_number"
+    ).fetchall()
+    rounds_order = ['Round of 32', 'Round of 16', 'Quarter-final', 'Semi-final', 'Third Place', 'Final']
+    bracket = {}
+    for r in rows:
+        d = dict(r)
+        bracket.setdefault(d['round'], []).append(d)
+    return render_template('bracket.html', bracket=bracket, rounds_order=rounds_order)
 
 
 def sync_fixtures_from_api():
@@ -862,6 +918,7 @@ def sync_fixtures_from_api():
 
 @app.route('/admin/sync-fixtures', methods=['POST'])
 @login_required
+@admin_required
 def admin_sync_fixtures():
     """Admin endpoint to sync fixture data from wheniskickoff.com."""
     try:

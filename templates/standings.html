@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 style="margin-bottom: 1.5rem;">Group Standings</h1>
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1rem;">
+{% for g, teams in groups.items() %}
+<div class="card" style="padding:1rem;">
+  <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.75rem;">
+    <span style="display:inline-flex;align-items:center;justify-content:center;width:1.5rem;height:1.5rem;border-radius:4px;background:#fbbf24;color:#0f1119;font-size:0.7rem;font-weight:700;">{{ g }}</span>
+    <span style="font-size:0.8rem;color:#7f8494;">Group {{ g }}</span>
+  </div>
+  <table style="width:100%;border-collapse:collapse;font-size:0.8rem;">
+    <thead>
+      <tr style="border-bottom:1px solid #262a36;">
+        <th style="padding:0.3rem 0.25rem;text-align:left;color:#535768;font-weight:600;">#</th>
+        <th style="padding:0.3rem 0.25rem;text-align:left;color:#535768;font-weight:600;">Team</th>
+        <th style="padding:0.3rem 0.25rem;text-align:center;color:#535768;font-weight:600;">P</th>
+        <th style="padding:0.3rem 0.25rem;text-align:center;color:#535768;font-weight:600;">W</th>
+        <th style="padding:0.3rem 0.25rem;text-align:center;color:#535768;font-weight:600;">D</th>
+        <th style="padding:0.3rem 0.25rem;text-align:center;color:#535768;font-weight:600;">L</th>
+        <th style="padding:0.3rem 0.25rem;text-align:center;color:#535768;font-weight:600;">GD</th>
+        <th style="padding:0.3rem 0.25rem;text-align:center;color:#535768;font-weight:600;">Pts</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for t in teams %}
+      <tr style="border-bottom:1px solid #1a1e2a;">
+        <td style="padding:0.4rem 0.25rem;text-align:left;color:#535768;">{{ loop.index }}</td>
+        <td style="padding:0.4rem 0.25rem;text-align:left;font-weight:500;">{{ t.team }}</td>
+        <td style="padding:0.4rem 0.25rem;text-align:center;">{{ t.w + t.d + t.l }}</td>
+        <td style="padding:0.4rem 0.25rem;text-align:center;">{{ t.w }}</td>
+        <td style="padding:0.4rem 0.25rem;text-align:center;">{{ t.d }}</td>
+        <td style="padding:0.4rem 0.25rem;text-align:center;">{{ t.l }}</td>
+        <td style="padding:0.4rem 0.25rem;text-align:center;">{{ t.gf - t.ga }}</td>
+        <td style="padding:0.4rem 0.25rem;text-align:center;font-weight:700;">{{ t.p }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endfor %}
+</div>
+{% endblock %}

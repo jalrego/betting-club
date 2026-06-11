@@ -143,6 +143,35 @@
   </form>
 </div>
 
+{% if activity %}
+<div class="card">
+  <h2>📊 Recent Activity</h2>
+  <div style="margin-top: 0.5rem;">
+  {% for a in activity %}
+    <div style="display:flex;align-items:center;gap:0.75rem;padding:0.5rem 0;border-bottom:1px solid #1a1e2a;font-size:0.85rem;">
+      <span style="font-weight:600;color:#fbbf24;white-space:nowrap;">{{ a.username }}</span>
+      <span style="color:#7f8494;flex:1;">
+        bet €{{ "%.2f"|format(a.stake) }}
+        {% if a.bet_type == 'multi' %}multi{% endif %}
+        on <strong>{{ a.match_info }}</strong>
+      </span>
+      <span style="white-space:nowrap;">
+        {% if a.result == 'pending' %}
+          <span class="text-muted">⏳</span>
+        {% elif a.result == 'won' %}
+          <span class="green">✅</span>
+        {% elif a.result == 'lost' %}
+          <span class="red">❌</span>
+        {% elif a.result == 'cashout' %}
+          <span class="gold">💵</span>
+        {% endif %}
+      </span>
+    </div>
+  {% endfor %}
+  </div>
+</div>
+{% endif %}
+
 {% if bets %}
 <div class="card" style="padding: 0;">
   <h2 style="padding: 1rem 1rem 0 1rem;">📋 My Bets</h2>
