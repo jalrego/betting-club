@@ -746,9 +746,6 @@ def dashboard():
             next_match = dict(next_match)
             next_match['lisbon_date'], next_match['lisbon_time'] = lisbon_time(
                 next_match['date'], next_match['match_time'], next_match.get('city', ''))
-        # progress bar counts
-        total_matches = query("SELECT COUNT(*) as cnt FROM fixtures WHERE home_team != 'TBD'").fetchone()['cnt']
-        played_matches = query("SELECT COUNT(*) as cnt FROM fixtures WHERE home_team != 'TBD' AND home_score IS NOT NULL").fetchone()['cnt']
     except Exception as e:
         logging.error(f"dashboard error: {e}")
         raise
@@ -762,9 +759,7 @@ def dashboard():
                            balance_history=balance_history,
                            starting=STARTING_BALANCE / 100.0,
                            next_match=next_match,
-                           fixture_scores=fixture_scores,
-                           total_matches=total_matches,
-                           played_matches=played_matches)
+                           fixture_scores=fixture_scores)
 
 
 @app.route('/bet/new', methods=['POST'])

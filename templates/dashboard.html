@@ -13,23 +13,11 @@
   </div>
 </div>
 
-{% set match_pct = (played_matches / total_matches * 100)|round(1) %}
-<div class="card" style="padding:1rem;">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;font-size:0.75rem;color:#7f8494;">
-    <span>Tournament Progress</span>
-    <span>{{ played_matches }} of {{ total_matches }} matches</span>
-  </div>
-  <div style="background:#1a1e2a;border-radius:999px;height:6px;overflow:hidden;">
-    <div style="width:{{ match_pct }}%;background:linear-gradient(90deg,#fbbf24,#eab308);height:100%;border-radius:999px;transition:width 1.5s ease-out;"></div>
-  </div>
-  <div style="text-align:right;font-size:0.65rem;color:#535768;margin-top:0.25rem;">{{ match_pct }}% complete</div>
-</div>
-
 {% if next_match %}
-<div class="card" id="next-match-card" data-utc="{{ next_match.date }} {{ next_match.match_time }}">
+<div class="card">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;">
     <span style="font-size:0.65rem;color:#7f8494;text-transform:uppercase;letter-spacing:0.08em;font-weight:500;">Next Match</span>
-    <span class="badge badge-pending" id="next-status">Upcoming</span>
+    <span class="badge badge-pending">Upcoming</span>
   </div>
   <div style="display:flex;align-items:center;justify-content:space-between;gap:0.75rem;">
     <div style="text-align:center;flex:1;">
@@ -50,41 +38,7 @@
       &middot; {{ next_match.city }}
     {% endif %}
   </div>
-  <div id="countdown" style="text-align:center;margin-top:0.5rem;font-size:0.85rem;font-weight:600;color:#fbbf24;font-variant-numeric:tabular-nums;"></div>
 </div>
-<script>
-(function(){
-  var el = document.getElementById('next-match-card');
-  if (!el) return;
-  var raw = el.getAttribute('data-utc');
-  if (!raw) return;
-  var parts = raw.split(' ');
-  var dp = parts[0].split('-'), tp = parts[1].split(':');
-  var target = new Date(Date.UTC(+dp[0], +dp[1]-1, +dp[2], +tp[0], +tp[1]));
-  var cd = document.getElementById('countdown');
-  var st = document.getElementById('next-status');
-  function tick(){
-    var diff = target - new Date();
-    if (diff <= 0) {
-      cd.textContent = 'LIVE NOW';
-      if (st) st.textContent = 'Live';
-      return;
-    }
-    var d = Math.floor(diff / 86400000);
-    var h = Math.floor((diff % 86400000) / 3600000);
-    var m = Math.floor((diff % 3600000) / 60000);
-    var s = Math.floor((diff % 60000) / 1000);
-    var a = [];
-    if (d > 0) a.push(d + 'd');
-    a.push(String(h).padStart(2,'0') + 'h');
-    a.push(String(m).padStart(2,'0') + 'm');
-    a.push(String(s).padStart(2,'0') + 's');
-    cd.textContent = 'Starts in ' + a.join(' ');
-  }
-  tick();
-  setInterval(tick, 1000);
-})();
-</script>
 {% endif %}
 
 <div class="card">
