@@ -619,7 +619,6 @@ def dashboard():
                            activity=activity,
                            fixtures=fixtures_for_select,
                            balance_history=balance_history,
-                           rounds=ROUNDS,
                            starting=STARTING_BALANCE / 100.0)
 
 
@@ -627,7 +626,6 @@ def dashboard():
 @login_required
 def new_bet():
     bet_type = request.form.get('bet_type', 'single')
-    round_ = request.form.get('round', '').strip()
     stake_str = request.form.get('stake', '').strip()
     odds_str = request.form.get('odds', '').strip()
 
@@ -650,12 +648,18 @@ def new_bet():
     else:
         match_info = request.form.get('match_info', '').strip()
         pick = request.form.get('pick', '').strip()
-        if not all([match_info, round_, stake_str, odds_str, pick]):
+        match_number = request.form.get('match_number', type=int)
+        if not all([match_info, stake_str, odds_str, pick]):
             flash('All bet fields are required.', 'danger')
             return redirect(url_for('dashboard'))
+        # look up round from the selected fixture
+        if match_number:
+            row = query(f'SELECT round FROM fixtures WHERE match_number = {p()}', (match_number,)).fetchone()
+            round_ = row['round'] if row else ''
+        else:
+            round_ = ''
         selections_json = None
         bet_type = 'single'
-        match_number = request.form.get('match_number', type=int)
 
     try:
         stake_raw = float(stake_str)
@@ -692,7 +696,7 @@ def new_bet():
         'INSERT INTO bets (user_id, match_info, round, stake, odds, pick, bet_type, selections, match_number) '
         f'VALUES ({p()}, {p()}, {p()}, {p()}, {p()}, {p()}, {p()}, {p()}, {p()})',
         (session['user_id'], match_info, round_, stake, odds, pick, bet_type, selections_json,
-         request.form.get('match_number', type=int))
+         match_number)
     )
     db.commit()
     # record balance after bet placed

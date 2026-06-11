@@ -130,15 +130,6 @@
       </div>
       <div class="form-grid">
         <div>
-          <label for="round">Round</label>
-          <select name="round" id="round" required class="input">
-            <option value="">Select round</option>
-            {% for r in rounds %}
-              <option value="{{ r }}">{{ r }}</option>
-            {% endfor %}
-          </select>
-        </div>
-        <div>
           <label for="stake">Stake (&euro;)</label>
           <input type="number" step="0.01" min="0.01" name="stake" id="stake" required placeholder="e.g. 5.00" inputmode="decimal">
         </div>
@@ -350,8 +341,6 @@ function filterMatches() {
           document.getElementById('matchSearch').value = text;
           document.getElementById('match_number').value = opt.value;
           document.getElementById('match_info').value = home + ' vs ' + away;
-          var roundSel = document.getElementById('round');
-          if (roundSel) roundSel.value = opt.getAttribute('data-round');
           dd.style.display = 'none';
         };
       })(opt, text);
