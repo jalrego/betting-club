@@ -1,68 +1,65 @@
 {% extends "base.html" %}
 {% block content %}
 
-<h1 style="margin-bottom: 1.5rem;">Dashboard</h1>
-
-<div class="welcome-banner">
-  <h1>FIFA World Cup 26</h1>
-  <p>Canada &middot; Mexico &middot; USA &mdash; Group Stage is here</p>
+<div class="welcome-banner" style="padding:1.5rem 1rem;">
+  <h1 style="margin:0;">FIFA World Cup 26</h1>
+  <p style="margin-top:0.25rem;">Canada &middot; Mexico &middot; USA &mdash; Group Stage is here</p>
 </div>
 
-<div class="stat-grid" style="margin-bottom: 1rem;">
-  <div class="card stat-box">
+<div class="stat-grid" style="grid-template-columns:1fr 1fr 1fr;margin-bottom:0.5rem;">
+  <div class="card stat-box" style="padding:0.6rem 0.5rem;border-top-color:#22c55e;">
     <div class="label">Balance</div>
-    <div class="value">{{ "%.2f"|format(balance) }}</div>
-    <div class="label" style="margin-top: 0.25rem;">&euro;</div>
+    <div class="value" style="font-size:1.2rem;">&euro;{{ "%.2f"|format(balance) }}</div>
   </div>
-  <div class="card stat-box">
+  <div class="card stat-box" style="padding:0.6rem 0.5rem;border-top-color:#fbbf24;">
     <div class="label">Profit / Loss</div>
     {% set pl = balance - starting %}
     {% if pl > 0 %}
-      <div class="value green">+{{ "%.2f"|format(pl) }}</div>
-      <div class="label green" style="margin-top: 0.25rem;">up</div>
+      <div class="value green" style="font-size:1.2rem;">+&euro;{{ "%.2f"|format(pl) }}</div>
     {% elif pl < 0 %}
-      <div class="value red">{{ "%.2f"|format(pl) }}</div>
-      <div class="label red" style="margin-top: 0.25rem;">down</div>
+      <div class="value red" style="font-size:1.2rem;">&euro;{{ "%.2f"|format(pl) }}</div>
     {% else %}
-      <div class="value">0.00</div>
-      <div class="label" style="margin-top: 0.25rem;">even</div>
+      <div class="value" style="font-size:1.2rem;">&euro;0.00</div>
     {% endif %}
   </div>
-  <div class="card stat-box">
+  <div class="card stat-box" style="padding:0.6rem 0.5rem;border-top-color:#6366f1;">
     <div class="label">Return</div>
     {% set pl = balance - starting %}
     {% if pl > 0 %}
-      <div class="value green">+{{ "%.1f"|format(pl / starting * 100) }}%</div>
+      <div class="value green" style="font-size:1.2rem;">+{{ "%.1f"|format(pl / starting * 100) }}%</div>
     {% elif pl < 0 %}
-      <div class="value red">{{ "%.1f"|format(pl / starting * 100) }}%</div>
+      <div class="value red" style="font-size:1.2rem;">{{ "%.1f"|format(pl / starting * 100) }}%</div>
     {% else %}
-      <div class="value">0.0%</div>
+      <div class="value" style="font-size:1.2rem;">0.0%</div>
     {% endif %}
-    <div class="label" style="margin-top: 0.25rem;">vs &euro;{{ "%.2f"|format(starting) }}</div>
   </div>
 </div>
 
-<div class="stat-grid" style="margin-bottom: 1rem;">
-  <div class="card stat-box">
+<div class="stat-grid" style="grid-template-columns:1fr 1fr 1fr 1fr;margin-bottom:0.5rem;">
+  <div class="card stat-box" style="padding:0.5rem 0.25rem;border-top-color:transparent;">
     <div class="label">Bets</div>
-    <div class="value">{{ stats.total }}</div>
+    <div class="value" style="font-size:1rem;">{{ stats.total }}</div>
   </div>
-  <div class="card stat-box">
+  <div class="card stat-box" style="padding:0.5rem 0.25rem;border-top-color:transparent;">
     <div class="label">Won</div>
-    <div class="value green">{{ stats.won }}</div>
+    <div class="value green" style="font-size:1rem;">{{ stats.won }}</div>
   </div>
-  <div class="card stat-box">
+  <div class="card stat-box" style="padding:0.5rem 0.25rem;border-top-color:transparent;">
+    <div class="label">Lost</div>
+    <div class="value red" style="font-size:1rem;">{{ stats.total - stats.won }}</div>
+  </div>
+  <div class="card stat-box" style="padding:0.5rem 0.25rem;border-top-color:transparent;">
     <div class="label">Win Rate</div>
-    <div class="value">{{ stats.win_rate }}%</div>
+    <div class="value" style="font-size:1rem;">{{ stats.win_rate }}%</div>
   </div>
 </div>
 
 {% if balance_history|length > 1 %}
-<div class="card" style="padding:1rem;">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem;">
-    <span style="font-size:0.85rem;color:#7f8494;">Balance History</span>
+<div class="card" style="padding:0.75rem 1rem;">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.25rem;">
+    <span style="font-size:0.65rem;color:#7f8494;text-transform:uppercase;letter-spacing:0.08em;font-weight:500;">Balance History</span>
   </div>
-  <svg viewBox="0 0 200 40" style="width:100%;height:40px;display:block;">
+  <svg viewBox="0 0 200 32" style="width:100%;height:32px;display:block;">
     {% set min_bal = balance_history|map(attribute='balance')|min %}
     {% set max_bal = balance_history|map(attribute='balance')|max %}
     {% set range = (max_bal - min_bal) or 1 %}
@@ -71,24 +68,40 @@
       points="
       {% for r in balance_history %}
         {% set x = (loop.index0 / (count - 1)) * 196 + 2 %}
-        {% set y = 36 - ((r.balance - min_bal) / range) * 32 %}
+        {% set y = 28 - ((r.balance - min_bal) / range) * 24 %}
         {{ "%.1f"|format(x) }},{{ "%.1f"|format(y) }}
         {% if not loop.last %} {% endif %}
       {% endfor %}
     "/>
-    {% set first = balance_history[0].balance %}
-    {% set last = balance_history[-1].balance %}
-    {% if last > first %}
-      <polygon fill="url(#sparkFill)" opacity="0.1"
-        points="2,36 {% for r in balance_history %}{% set x = (loop.index0 / (count - 1)) * 196 + 2 %}{% set y = 36 - ((r.balance - min_bal) / range) * 32 %}{{ "%.1f"|format(x) }},{{ "%.1f"|format(y) }} {% endfor %}198,36 2,36"/>
-    {% endif %}
   </svg>
-  <defs>
-    <linearGradient id="sparkFill" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#fbbf24"/>
-      <stop offset="100%" stop-color="#fbbf24" stop-opacity="0"/>
-    </linearGradient>
-  </defs>
+</div>
+{% endif %}
+
+{% if next_match %}
+<div class="card">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;">
+    <span style="font-size:0.65rem;color:#7f8494;text-transform:uppercase;letter-spacing:0.08em;font-weight:500;">Next Match</span>
+    <span class="badge badge-pending">Upcoming</span>
+  </div>
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:0.75rem;">
+    <div style="text-align:center;flex:1;">
+      <div style="font-size:2rem;margin-bottom:0.25rem;">{{ team_flag(next_match.home_team) }}</div>
+      <div style="font-weight:600;font-size:0.9rem;">{{ next_match.home_team }}</div>
+    </div>
+    <div style="text-align:center;flex-shrink:0;">
+      <div style="background:#1a1e2a;padding:0.35rem 0.75rem;border-radius:8px;font-weight:700;font-size:0.9rem;color:#fbbf24;">vs</div>
+    </div>
+    <div style="text-align:center;flex:1;">
+      <div style="font-size:2rem;margin-bottom:0.25rem;">{{ team_flag(next_match.away_team) }}</div>
+      <div style="font-weight:600;font-size:0.9rem;">{{ next_match.away_team }}</div>
+    </div>
+  </div>
+  <div style="text-align:center;margin-top:0.75rem;font-size:0.8rem;color:#7f8494;">
+    {{ next_match.lisbon_date[-5:] }} &middot; {{ next_match.lisbon_time }}
+    {% if next_match.venue and next_match.venue != 'TBD' %}
+      &middot; {{ next_match.city }}
+    {% endif %}
+  </div>
 </div>
 {% endif %}
 
@@ -182,8 +195,9 @@
 
 {% if activity %}
 <div class="card">
-  <h2>📊 Recent Activity</h2>
-  <div style="margin-top: 0.5rem;">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem;">
+    <h2 style="margin:0;">📊 Recent Activity</h2>
+  </div>
   {% set colors = ['#6366f1','#22c55e','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#ec4899','#10b981'] %}
   {% for a in activity %}
     <div style="display:flex;align-items:center;gap:0.75rem;padding:0.5rem 0;border-bottom:1px solid #1a1e2a;font-size:0.85rem;">
@@ -206,20 +220,23 @@
       </span>
     </div>
   {% endfor %}
-  </div>
 </div>
 {% endif %}
 
 {% if bets %}
 <div class="card" style="padding: 0;">
-  <h2 style="padding: 1rem 1rem 0 1rem;">📋 My Bets</h2>
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:1rem 1rem 0 1rem;">
+    <h2 style="margin:0;">📋 My Bets</h2>
+    {% if bets|length > 5 %}
+      <a href="{{ url_for('user_profile', user_id=session.user_id) }}" class="text-sm" style="color:#7f8494;">View all ({{ bets|length }}) &rarr;</a>
+    {% endif %}
+  </div>
   <div class="table-wrap">
   <table>
     <thead>
       <tr>
         <th>Type</th>
         <th>Match</th>
-        <th>Round</th>
         <th>Stake</th>
         <th>Odds</th>
         <th>Pick</th>
@@ -228,7 +245,7 @@
       </tr>
     </thead>
     <tbody>
-      {% for bet in bets %}
+      {% for bet in bets[:5] %}
       <tr>
         <td>
           {% if bet.bet_type == 'multi' %}
@@ -252,7 +269,6 @@
             </details>
           {% endif %}
         </td>
-        <td class="text-sm text-muted">{{ bet.round }}</td>
         <td>&euro;{{ "%.2f"|format(bet.stake) }}</td>
         <td>{{ "%.2f"|format(bet.odds) }}</td>
         <td class="text-sm">{{ bet.pick }}</td>
@@ -303,7 +319,6 @@ function toggleBetType() {
   multis.forEach(function(el) { el.required = isMulti; });
 }
 
-// populate match_info hidden field from dropdown + search
 function filterMatches() {
   var q = (document.getElementById('matchSearch').value || '').toLowerCase();
   var sel = document.getElementById('match_number');

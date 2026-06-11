@@ -220,7 +220,6 @@
     <div>
       {% if session.user_id %}
         {% set colors = ['#6366f1','#22c55e','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#ec4899','#10b981'] %}
-        {% set idx = (session.username|string|length * 7 + loop.index0 if loop is defined else 3) % colors|length %}
         <span class="avatar" style="background:{{ colors[session.username|length % colors|length] }};">
           {{ session.username[:1]|upper }}
         </span>

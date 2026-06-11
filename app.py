@@ -52,6 +52,33 @@ def team_flag(team_name):
     return ''.join(chr(0x1F1E6 + ord(c) - ord('A')) for c in code.upper())
 
 
+CITY_OFFSETS = {
+    'East Rutherford, NJ': -4, 'Los Angeles, CA': -7,
+    'Arlington, TX': -5, 'Miami Gardens, FL': -4,
+    'Atlanta, GA': -4, 'Houston, TX': -5,
+    'Philadelphia, PA': -4, 'Santa Clara, CA': -7,
+    'Kansas City, MO': -5, 'Foxborough, MA': -4,
+    'Seattle, WA': -7, 'Landover, MD': -4,
+    'Nashville, TN': -5, 'Glendale, AZ': -7,
+    'Toronto, ON': -4, 'Vancouver, BC': -7,
+    'Mexico City': -6, 'Guadalajara': -6, 'Monterrey': -6,
+}
+
+
+def lisbon_time(date_str, time_str, city):
+    """Convert venue local time to Lisbon/London time (UTC+1)."""
+    if not time_str or not date_str:
+        return date_str, time_str or ''
+    try:
+        from datetime import datetime, timedelta
+        dt = datetime.strptime(f'{date_str} {time_str}', '%Y-%m-%d %H:%M')
+        offset = CITY_OFFSETS.get(city, -4)
+        lisbon_dt = dt - timedelta(hours=offset) + timedelta(hours=1)
+        return lisbon_dt.strftime('%Y-%m-%d'), lisbon_dt.strftime('%H:%M')
+    except (ValueError, TypeError):
+        return date_str, time_str
+
+
 def get_db():
     if 'db' in g:
         return g.db
@@ -508,7 +535,7 @@ def teardown(exception):
 
 @app.context_processor
 def inject_globals():
-    return dict(team_flag=team_flag)
+    return dict(team_flag=team_flag, lisbon_time=lisbon_time)
 
 
 @app.errorhandler(500)
@@ -641,6 +668,14 @@ def dashboard():
             (user_id,)
         ).fetchall()
         balance_history = [dict(r) for r in hist]
+        # next upcoming match
+        next_match = query(
+            f'SELECT * FROM fixtures WHERE home_team != \'TBD\' AND away_team != \'TBD\' AND home_score IS NULL ORDER BY date ASC, match_time ASC LIMIT 1'
+        ).fetchone()
+        if next_match:
+            next_match = dict(next_match)
+            next_match['lisbon_date'], next_match['lisbon_time'] = lisbon_time(
+                next_match['date'], next_match['match_time'], next_match.get('city', ''))
     except Exception as e:
         logging.error(f"dashboard error: {e}")
         raise
@@ -652,7 +687,8 @@ def dashboard():
                            activity=activity,
                            fixtures=fixtures_for_select,
                            balance_history=balance_history,
-                           starting=STARTING_BALANCE / 100.0)
+                           starting=STARTING_BALANCE / 100.0,
+                           next_match=next_match)
 
 
 @app.route('/bet/new', methods=['POST'])
@@ -1041,6 +1077,12 @@ def leaderboard():
         for u in users:
             bal = user_balance(u['id'])
             stats = user_bet_stats(u['id'])
+            # last 5 results for form dots
+            recent_bets = query(
+                f'SELECT result FROM bets WHERE user_id = {p()} AND result IS NOT NULL ORDER BY created_at DESC LIMIT 5',
+                (u['id'],)
+            ).fetchall()
+            form = [r['result'] for r in recent_bets]
             players.append({
                 'id': u['id'],
                 'username': u['username'],
@@ -1048,6 +1090,7 @@ def leaderboard():
                 'updates': stats['total'],
                 'win_rate': stats['win_rate'],
                 'staked': stats['staked'],
+                'form': form,
             })
 
         players.sort(key=lambda p: p['latest_balance'], reverse=True)

@@ -15,10 +15,11 @@
         <th>P&amp;L</th>
         <th>Bets</th>
         <th>Win Rate</th>
-        <th>Staked</th>
+        <th>Form</th>
       </tr>
     </thead>
     <tbody>
+      {% set colors = ['#6366f1','#22c55e','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#ec4899','#10b981'] %}
       {% for player in players %}
       <tr>
         <td style="padding-left: 1rem;">
@@ -32,10 +33,20 @@
             <span class="rank-num">{{ loop.index }}</span>
           {% endif %}
         </td>
-        <td><a href="{{ url_for('user_profile', user_id=player.id) }}"><strong>{{ player.username }}</strong></a></td>
+        <td>
+          <div style="display:flex;align-items:center;gap:0.6rem;">
+            <span class="avatar" style="background:{{ colors[player.username|length % colors|length] }};">{{ player.username[:1]|upper }}</span>
+            <a href="{{ url_for('user_profile', user_id=player.id) }}"><strong>{{ player.username }}</strong></a>
+          </div>
+        </td>
         <td>
           {% if player.latest_balance is not none %}
-            &euro;{{ "%.2f"|format(player.latest_balance) }}
+            <strong>&euro;{{ "%.2f"|format(player.latest_balance) }}</strong>
+            <div style="margin-top:0.25rem;width:80px;height:4px;background:#1a1e2a;border-radius:2px;">
+              {% set max_progress = players|map(attribute='latest_balance')|max %}
+              <div style="width:{{ (player.latest_balance / max_progress * 100)|round }}%;height:4px;background:
+                {%- if loop.index == 1 %}#fbbf24{% elif loop.index == 2 %}#9ca3af{% elif loop.index == 3 %}#d97706{% else %}#6366f1{% endif %};border-radius:2px;"></div>
+            </div>
           {% else %}
             <span class="text-muted">&mdash;</span>
           {% endif %}
@@ -56,7 +67,20 @@
         </td>
         <td class="text-sm">{{ player.updates }}</td>
         <td class="text-sm">{{ player.win_rate }}%</td>
-        <td class="text-sm text-muted">&euro;{{ "%.2f"|format(player.staked) }}</td>
+        <td>
+          <div style="display:flex;gap:3px;">
+            {% for r in player.form %}
+              <span style="display:inline-block;width:8px;height:8px;border-radius:50%;
+                {%- if r == 'won' %}background:#22c55e;
+                {%- elif r == 'lost' %}background:#ef4444;
+                {%- elif r == 'cashout' %}background:#fbbf24;
+                {%- else %}background:#535768;{% endif %}"></span>
+            {% endfor %}
+            {% if not player.form %}
+              <span class="text-muted" style="font-size:0.65rem;">&mdash;</span>
+            {% endif %}
+          </div>
+        </td>
       </tr>
       {% endfor %}
     </tbody>

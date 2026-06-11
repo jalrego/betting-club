@@ -35,14 +35,11 @@
           </div>
           <table style="width:100%;border-collapse:collapse;">
             {% for f in group_fixtures %}
+            {% set ld, lt = lisbon_time(f.date, f.match_time, f.city) %}
             <tr style="border-bottom:1px solid #1a1e2a;">
               <td style="padding:0.55rem 0.5rem 0.55rem 0;vertical-align:middle;">
-                {% if f.match_time %}
-                <span style="font-size:0.65rem;color:#7f8494;display:block;">{{ f.date[-5:] }}</span>
-                <span style="font-size:0.6rem;color:#535768;display:block;">{{ f.match_time }}</span>
-                {% else %}
-                <span style="font-size:0.65rem;color:#7f8494;">{{ f.date[-5:] }}</span>
-                {% endif %}
+                <span style="font-size:0.65rem;color:#7f8494;display:block;">{{ ld[-5:] }}</span>
+                <span style="font-size:0.6rem;color:#535768;display:block;">{{ lt }}</span>
               </td>
               <td style="padding:0.55rem 0.5rem;vertical-align:middle;text-align:right;font-size:0.85rem;font-weight:500;white-space:nowrap;">{% if f.home_team == 'TBD' %}<span style="color:#535768;font-style:italic;">TBD</span>{% else %}{{ team_flag(f.home_team) }} {{ f.home_team }}{% endif %}</td>
               <td style="padding:0.55rem 0.5rem;vertical-align:middle;text-align:center;min-width:3.5rem;">
@@ -72,14 +69,11 @@
     {% else %}
       <table style="width:100%;border-collapse:collapse;">
         {% for f in round_data %}
+        {% set ld, lt = lisbon_time(f.date, f.match_time, f.city) %}
         <tr style="border-bottom:1px solid #1a1e2a;">
           <td style="padding:0.55rem 0.5rem 0.55rem 0;vertical-align:middle;">
-            {% if f.match_time %}
-            <span style="font-size:0.65rem;color:#7f8494;display:block;">{{ f.date[-5:] }}</span>
-            <span style="font-size:0.6rem;color:#535768;display:block;">{{ f.match_time }}</span>
-            {% else %}
-            <span style="font-size:0.65rem;color:#7f8494;">{{ f.date[-5:] }}</span>
-            {% endif %}
+            <span style="font-size:0.65rem;color:#7f8494;display:block;">{{ ld[-5:] }}</span>
+            <span style="font-size:0.6rem;color:#535768;display:block;">{{ lt }}</span>
           </td>
           <td style="padding:0.55rem 0.5rem;vertical-align:middle;text-align:right;font-size:0.85rem;font-weight:500;white-space:nowrap;">
             {% if f.home_team == 'TBD' %}<span style="color:#535768;font-style:italic;">TBD</span>{% else %}{{ team_flag(f.home_team) }} {{ f.home_team }}{% endif %}
