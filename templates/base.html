@@ -104,6 +104,10 @@
       transition: border-color 0.15s;
     }
     input:focus, textarea:focus { outline: none; border-color: #fbbf24; box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.1); }
+    input[type="range"] { -webkit-appearance: none; appearance: none; height: 6px; background: #1e2230; border-radius: 3px; outline: none; margin: 0; border: none; padding: 0; }
+    input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 18px; height: 18px; border-radius: 50%; background: #fbbf24; cursor: pointer; border: 2px solid #0a0c12; box-shadow: 0 1px 4px rgba(0,0,0,0.4); }
+    input[type="range"]::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: #fbbf24; cursor: pointer; border: 2px solid #0a0c12; box-shadow: 0 1px 4px rgba(0,0,0,0.4); }
+    input[type="range"]:focus { border-color: transparent; box-shadow: none; }
     table { width: 100%; border-collapse: collapse; }
     th, td { text-align: left; padding: 0.65rem 0.5rem; border-bottom: 1px solid #1a1e2a; }
     th { color: #7f8494; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; padding-top: 0.8rem; padding-bottom: 0.5rem; }
