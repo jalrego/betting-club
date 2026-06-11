@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240">
+  <defs>
+    <linearGradient id="gld" x1="0" y1="0" x2="240" y2="240">
+      <stop offset="0%" stop-color="#fbbf24"/>
+      <stop offset="50%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#d97706"/>
+    </linearGradient>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="240">
+      <stop offset="0%" stop-color="#1a1e2a"/>
+      <stop offset="100%" stop-color="#0f1119"/>
+    </linearGradient>
+  </defs>
+  <rect width="240" height="240" rx="32" fill="url(#bg)"/>
+  <!-- Trophy outline -->
+  <path d="M120 35c-5 0-9 4-9 9v8h-8c-3 0-6 2-7 5l-4 10c-1 3 0 7 3 9l12 8c-3 14-9 30-18 42-6 8-13 14-21 18-3 2-5 5-5 9v12c0 4 3 7 7 7h100c4 0 7-3 7-7v-12c0-4-2-7-5-9-8-4-15-10-21-18-9-12-15-28-18-42l12-8c3-2 4-6 3-9l-4-10c-1-3-4-5-7-5h-8v-8c0-5-4-9-9-9z" fill="url(#gld)" opacity="0.15"/>
+  <!-- 2 -->
+  <path d="M72 155c0 0 0-40 0-45 0-5 4-8 8-8h14c5 0 8 4 8 8 0 5-4 8-8 8H86v4l10 9c3 3 5 7 5 12 0 5-2 9-6 12l-12 10c-2 2-5 3-8 3h-2" fill="none" stroke="url(#gld)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- 6 -->
+  <path d="M128 165c4 4 9 6 15 6 6 0 11-2 15-6 4-4 6-9 6-15 0-6-2-11-6-15-4-4-9-6-15-6-10 0-17 6-19 15l-2 22c-2 9-8 15-19 15-6 0-11-2-15-6-4-4-6-9-6-15 0-6 2-11 6-15 4-4 9-6 15-6" fill="none" stroke="url(#gld)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Trophy cup on top of 26 -->
+  <path d="M120 120c-8 0-15-5-18-12l-3-6c-1-2-1-5 1-7l4-3c2-1 4-2 6-3l5-2c2-1 3-2 5-2 2 0 3 1 5 2l5 2c2 1 4 2 6 3l4 3c2 2 2 5 1 7l-3 6c-3 7-10 12-18 12z" fill="url(#gld)" opacity="0.5"/>
+  <path d="M117 113c-1-3-2-5-3-8M123 113c1-3 2-5 3-8" fill="none" stroke="url(#gld)" stroke-width="2" stroke-linecap="round"/>
+  <path d="M112 102c3-2 5-3 8-4 3-1 6-1 8 0 3 1 5 2 8 4" fill="none" stroke="url(#gld)" stroke-width="2" stroke-linecap="round"/>
+  <!-- Stars -->
+  <circle cx="85" cy="65" r="2" fill="#fbbf24" opacity="0.4"/>
+  <circle cx="155" cy="65" r="2" fill="#fbbf24" opacity="0.4"/>
+  <circle cx="75" cy="85" r="1.5" fill="#fbbf24" opacity="0.3"/>
+  <circle cx="165" cy="85" r="1.5" fill="#fbbf24" opacity="0.3"/>
+</svg>

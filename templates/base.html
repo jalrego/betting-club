@@ -184,24 +184,7 @@
 <body>
   <nav>
     <div class="brand">
-      <svg width="36" height="36" viewBox="0 0 120 120" fill="none">
-        <defs>
-          <linearGradient id="wc26" x1="0" y1="0" x2="120" y2="120">
-            <stop offset="0%" stop-color="#6366f1"/>
-            <stop offset="100%" stop-color="#4f46e5"/>
-          </linearGradient>
-        </defs>
-        <circle cx="60" cy="60" r="56" fill="url(#wc26)" stroke="#fbbf24" stroke-width="2"/>
-        <circle cx="60" cy="60" r="48" fill="none" stroke="#fbbf24" stroke-width="0.8" opacity="0.4"/>
-        <text x="60" y="55" text-anchor="middle" fill="#fbbf24" font-size="28" font-weight="900" font-family="Arial">26</text>
-        <text x="60" y="72" text-anchor="middle" fill="#fff" font-size="6" font-weight="600" font-family="Arial" opacity="0.8">WORLD CUP</text>
-        <circle cx="44" cy="44" r="3" fill="#fff" opacity="0.2"/>
-        <circle cx="76" cy="44" r="3" fill="#fff" opacity="0.2"/>
-        <circle cx="44" cy="76" r="3" fill="#fff" opacity="0.2"/>
-        <circle cx="76" cy="76" r="3" fill="#fff" opacity="0.2"/>
-        <path d="M60 30 Q70 40 60 50 Q50 40 60 30Z" fill="#fbbf24" opacity="0.3"/>
-        <path d="M60 70 Q70 80 60 90 Q50 80 60 70Z" fill="#fbbf24" opacity="0.3"/>
-      </svg>
+      <img src="{{ url_for('static', filename='wc26-logo.svg') }}" alt="WC26" style="height:2rem;width:auto;">
       <span>FIFA World Cup <span style="font-weight:400;">26</span> <span style="font-weight:400;font-size:0.7rem;color:#7f8494;">Canada · Mexico · USA</span></span>
       <span style="margin-left:0.75rem;padding-left:0.75rem;border-left:1px solid #262a36;font-size:0.8rem;color:#7f8494;">Betting Club</span>
     </div>

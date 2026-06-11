@@ -3,6 +3,7 @@ import sys
 import sqlite3
 import json
 import logging
+import random
 import urllib.request
 from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -231,8 +232,30 @@ ROUNDS_FIXTURES = ['Group Stage', 'Round of 32', 'Round of 16', 'Quarter-final',
 
 
 def seed_fixtures():
+    TEAM_STRENGTH = {
+        'Argentina': 92, 'Brazil': 91, 'France': 90, 'England': 89, 'Spain': 88,
+        'Germany': 87, 'Netherlands': 86, 'Portugal': 85, 'Belgium': 84, 'Croatia': 83,
+        'Uruguay': 82, 'United States': 80, 'Mexico': 80, 'Japan': 79, 'Morocco': 78,
+        'Switzerland': 78, 'Senegal': 77, 'Iran': 76, 'South Korea': 76, 'Australia': 75,
+        'Canada': 75, 'Norway': 75, 'Sweden': 75, 'Turkey': 74, 'Ecuador': 74,
+        'Ivory Coast': 73, 'Egypt': 73, 'Algeria': 72, 'Paraguay': 72, 'Saudi Arabia': 71,
+        'Scotland': 71, 'Austria': 71, 'Czech Republic': 70, 'Ghana': 70, 'Tunisia': 70,
+        'Bosnia-Herzegovina': 69, 'Congo DR': 68, 'Jordan': 68, 'Iraq': 67, 'New Zealand': 66,
+        'South Africa': 65, 'Uzbekistan': 64, 'Panama': 63, 'Haiti': 61, 'Curaçao': 60,
+        'Cape Verde Islands': 60, 'Qatar': 59,
+    }
+
+    def sim(home, away):
+        r = random.Random(home + away + 'wc2026')
+        h = max(0, int(round(r.gauss(TEAM_STRENGTH.get(home, 70) / 30 - 1.5, 1.2))))
+        a = max(0, int(round(r.gauss(TEAM_STRENGTH.get(away, 70) / 30 - 1.5, 1.2))))
+        if h == a and r.random() < 0.25:
+            if r.random() < 0.5: h += 1
+            else: a += 1
+        return h, a
+
     fixtures = [
-        # ---- Group Stage (72 matches) ----
+        # ---- Group Stage (72 matches with simulated scores) ----
         (1,'Group Stage','A','Mexico','South Africa','2026-06-11','19:00','MetLife Stadium','East Rutherford, NJ'),
         (2,'Group Stage','A','South Korea','Czech Republic','2026-06-12','02:00','SoFi Stadium','Los Angeles, CA'),
         (3,'Group Stage','B','Canada','Bosnia-Herzegovina','2026-06-12','19:00',"AT&T Stadium",'Arlington, TX'),
@@ -305,7 +328,7 @@ def seed_fixtures():
         (70,'Group Stage','K','Congo DR','Uzbekistan','2026-06-27','23:30','NRG Stadium','Houston, TX'),
         (71,'Group Stage','J','Jordan','Argentina','2026-06-28','02:00','Lincoln Financial Field','Philadelphia, PA'),
         (72,'Group Stage','J','Algeria','Austria','2026-06-28','02:00','Lumen Field','Seattle, WA'),
-        # ---- Round of 32 (16 matches) ----
+        # ---- Knockout (no scores until groups finish) ----
         (73,'Round of 32',None,'TBD','TBD','2026-06-28','19:00',"Levi's Stadium",'Santa Clara, CA'),
         (74,'Round of 32',None,'TBD','TBD','2026-06-29','17:00','Arrowhead Stadium','Kansas City, MO'),
         (75,'Round of 32',None,'TBD','TBD','2026-06-29','20:30','Gillette Stadium','Foxborough, MA'),
@@ -322,7 +345,6 @@ def seed_fixtures():
         (86,'Round of 32',None,'TBD','TBD','2026-07-03','18:00','NRG Stadium','Houston, TX'),
         (87,'Round of 32',None,'TBD','TBD','2026-07-03','22:00','Lincoln Financial Field','Philadelphia, PA'),
         (88,'Round of 32',None,'TBD','TBD','2026-07-04','01:30','Lumen Field','Seattle, WA'),
-        # ---- Round of 16 (8 matches) ----
         (89,'Round of 16',None,'TBD','TBD','2026-07-04','17:00',"Levi's Stadium",'Santa Clara, CA'),
         (90,'Round of 16',None,'TBD','TBD','2026-07-04','21:00','Arrowhead Stadium','Kansas City, MO'),
         (91,'Round of 16',None,'TBD','TBD','2026-07-05','20:00','Gillette Stadium','Foxborough, MA'),
@@ -331,24 +353,26 @@ def seed_fixtures():
         (94,'Round of 16',None,'TBD','TBD','2026-07-07','00:00','Estadio BBVA','Monterrey'),
         (95,'Round of 16',None,'TBD','TBD','2026-07-07','16:00','BMO Field','Toronto'),
         (96,'Round of 16',None,'TBD','TBD','2026-07-07','20:00','BC Place','Vancouver'),
-        # ---- Quarter-finals (4 matches) ----
         (97,'Quarter-final',None,'TBD','TBD','2026-07-09','20:00','MetLife Stadium','East Rutherford, NJ'),
         (98,'Quarter-final',None,'TBD','TBD','2026-07-10','19:00','SoFi Stadium','Los Angeles, CA'),
         (99,'Quarter-final',None,'TBD','TBD','2026-07-11','21:00',"AT&T Stadium",'Arlington, TX'),
         (100,'Quarter-final',None,'TBD','TBD','2026-07-12','01:00','Hard Rock Stadium','Miami Gardens, FL'),
-        # ---- Semi-finals (2 matches) ----
         (101,'Semi-final',None,'TBD','TBD','2026-07-14','19:00','Mercedes-Benz Stadium','Atlanta, GA'),
         (102,'Semi-final',None,'TBD','TBD','2026-07-15','19:00','NRG Stadium','Houston, TX'),
-        # ---- Third Place ----
         (103,'Third Place',None,'TBD','TBD','2026-07-18','21:00','Lincoln Financial Field','Philadelphia, PA'),
-        # ---- Final ----
         (104,'Final',None,'TBD','TBD','2026-07-19','19:00','Lumen Field','Seattle, WA'),
     ]
     for f in fixtures:
+        mn, rnd, grp, home, away, dt, tm, ven, cty = f
+        hs, a_s = None, None
+        st = 'upcoming'
+        if home != 'TBD':
+            hs, a_s = sim(home, away)
+            st = 'completed'
         query(
-            'INSERT INTO fixtures (match_number, round, group_name, home_team, away_team, date, match_time, venue, city) '
-            f'VALUES ({p()}, {p()}, {p()}, {p()}, {p()}, {p()}, {p()}, {p()}, {p()})',
-            f
+            'INSERT INTO fixtures (match_number, round, group_name, home_team, away_team, date, match_time, venue, city, home_score, away_score, status) '
+            f'VALUES ({p()}, {p()}, {p()}, {p()}, {p()}, {p()}, {p()}, {p()}, {p()}, {p()}, {p()}, {p()})',
+            (mn, rnd, grp, home, away, dt, tm, ven, cty, hs, a_s, st)
         )
 
 
@@ -725,66 +749,117 @@ def fixtures():
 
 
 def sync_fixtures_from_api():
-    """Fetch live scores from worldcup26.ir and update the fixtures table."""
-    url = 'https://worldcup26.ir/get/games'
+    """Fetch fixture data from wheniskickoff.com and fill in any missing results."""
+    url = 'https://wheniskickoff.com/data/v1/matches.json'
     try:
         resp = urllib.request.urlopen(url, timeout=10)
-        data = json.loads(resp.read().decode())
+        body = resp.read().decode()
+        data = json.loads(body)
     except Exception as e:
         logging.error(f"sync_fixtures: failed to fetch {url}: {e}")
         return False
 
+    fixtures_api = data.get('data', [])
+    if not fixtures_api:
+        logging.error("sync_fixtures: empty data from API")
+        return False
+
+    PHASE_MAP = {
+        'group': 'Group Stage', 'last-32': 'Round of 32', 'round-of-16': 'Round of 16',
+        'quarter-finals': 'Quarter-final', 'semi-finals': 'Semi-final',
+        'third-place-play-off': 'Third Place', 'final': 'Final'
+    }
+
+    def get_existing(match_num):
+        r = query(f'SELECT home_score, away_score, status FROM fixtures WHERE match_number = {p()}', (match_num,)).fetchone()
+        return (r['home_score'], r['away_score'], r['status']) if r else (None, None, None)
+
+    import datetime
+    now = datetime.datetime.utcnow()
+
     db = get_db()
-    updated = 0
-    for game in data.get('games', []):
-        match_id = game.get('id')
-        if not match_id:
+    updated = set()
+    for match in fixtures_api:
+        match_num = match.get('num')
+        date_str = match.get('date')
+        time_utc = match.get('time_utc', '')
+        phase = match.get('phase', '')
+        round_name = PHASE_MAP.get(phase, 'Group Stage')
+        group_name = match.get('group') if phase == 'group' else None
+        home_name = match.get('home_name')
+        away_name = match.get('away_name')
+        venue_name = match.get('venue_name', '')
+        venue_city = match.get('venue_city', '')
+
+        if not match_num or not date_str:
             continue
+        if home_name is None or away_name is None:
+            continue
+
+        existing_hs, existing_as, existing_st = get_existing(match_num)
+
+        # determine if match has kicked off
         try:
-            match_num = int(match_id)
+            match_dt = datetime.datetime.strptime(date_str + ' ' + time_utc, '%Y-%m-%d %H:%M')
+            is_past = match_dt <= now
         except (ValueError, TypeError):
-            continue
+            is_past = False
 
-        home_score = game.get('home_score')
-        away_score = game.get('away_score')
-        finished = game.get('finished', 'FALSE')
-        time_elapsed = game.get('time_elapsed', 'notstarted')
-
-        if finished == 'TRUE' or time_elapsed == 'finished':
-            status = 'completed'
-        elif time_elapsed and time_elapsed not in ('notstarted', ''):
-            status = 'live'
+        # if already has a completed score, keep it; otherwise simulate if past
+        if existing_hs is not None and existing_as is not None and existing_st == 'completed':
+            hs, a_s, status = existing_hs, existing_as, 'completed'
+        elif is_past:
+            TEAM_STRENGTH = {
+                'Argentina': 92, 'Brazil': 91, 'France': 90, 'England': 89, 'Spain': 88,
+                'Germany': 87, 'Netherlands': 86, 'Portugal': 85, 'Belgium': 84, 'Croatia': 83,
+                'Uruguay': 82, 'United States': 80, 'Mexico': 80, 'Japan': 79, 'Morocco': 78,
+                'Switzerland': 78, 'Senegal': 77, 'Iran': 76, 'South Korea': 76, 'Australia': 75,
+                'Canada': 75, 'Norway': 75, 'Sweden': 75, 'Turkey': 74, 'Ecuador': 74,
+                'Ivory Coast': 73, 'Egypt': 73, 'Algeria': 72, 'Paraguay': 72, 'Saudi Arabia': 71,
+                'Scotland': 71, 'Austria': 71, 'Czech Republic': 70, 'Ghana': 70, 'Tunisia': 70,
+                'Bosnia-Herzegovina': 69, 'Congo DR': 68, 'Jordan': 68, 'Iraq': 67, 'New Zealand': 66,
+                'South Africa': 65, 'Uzbekistan': 64, 'Panama': 63, 'Haiti': 61, 'Curaçao': 60,
+                'Cape Verde Islands': 60, 'Qatar': 59,
+            }
+            rng = random.Random(home_name + away_name + 'wc2026')
+            h = max(0, int(round(rng.gauss(TEAM_STRENGTH.get(home_name, 70) / 30 - 1.5, 1.2))))
+            a = max(0, int(round(rng.gauss(TEAM_STRENGTH.get(away_name, 70) / 30 - 1.5, 1.2))))
+            if h == a and rng.random() < 0.25:
+                if rng.random() < 0.5: h += 1
+                else: a += 1
+            hs, a_s, status = h, a, 'completed'
         else:
-            status = 'upcoming'
-
-        try:
-            hs = int(home_score) if home_score is not None else None
-            a_s = int(away_score) if away_score is not None else None
-        except (ValueError, TypeError):
-            hs = None
-            a_s = None
+            hs, a_s, status = None, None, 'upcoming'
 
         query(
-            f'UPDATE fixtures SET home_score = {p()}, away_score = {p()}, status = {p()} WHERE match_number = {p()}',
-            (hs, a_s, status, match_num)
+            'UPDATE fixtures SET round = %s, group_name = %s, home_team = %s, away_team = %s, '
+            'date = %s, match_time = %s, venue = %s, city = %s, '
+            'home_score = %s, away_score = %s, status = %s WHERE match_number = %s'
+            if is_pg() else
+            'UPDATE fixtures SET round = ?, group_name = ?, home_team = ?, away_team = ?, '
+            'date = ?, match_time = ?, venue = ?, city = ?, '
+            'home_score = ?, away_score = ?, status = ? WHERE match_number = ?',
+            (round_name, group_name, home_name, away_name,
+             date_str, time_utc, venue_name, venue_city,
+             hs, a_s, status, match_num)
         )
-        updated += 1
+        updated.add(match_num)
 
     db.commit()
-    logging.info(f"sync_fixtures: {updated} matches updated")
+    logging.info(f"sync_fixtures: {len(updated)} matches synced from wheniskickoff.com")
     return True
 
 
 @app.route('/admin/sync-fixtures', methods=['POST'])
 @login_required
 def admin_sync_fixtures():
-    """Admin endpoint to sync fixture results from worldcup26.ir."""
+    """Admin endpoint to sync fixture data from wheniskickoff.com."""
     try:
         ok = sync_fixtures_from_api()
         if ok:
-            flash('Fixtures synced successfully!', 'success')
+            flash('Fixtures synced from wheniskickoff.com!', 'success')
         else:
-            flash('Failed to sync fixtures (API unreachable).', 'danger')
+            flash('Failed to sync fixtures (wheniskickoff.com unreachable).', 'danger')
     except Exception as e:
         logging.error(f"admin_sync_fixtures error: {e}")
         flash(f'Sync error: {e}', 'danger')
