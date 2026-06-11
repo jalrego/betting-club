@@ -364,13 +364,21 @@ def seed_fixtures():
         (103,'Third Place',None,'TBD','TBD','2026-07-18','21:00','Lincoln Financial Field','Philadelphia, PA'),
         (104,'Final',None,'TBD','TBD','2026-07-19','19:00','Lumen Field','Seattle, WA'),
     ]
+    import datetime
+    now = datetime.datetime.utcnow()
     for f in fixtures:
         mn, rnd, grp, home, away, dt, tm, ven, cty = f
         hs, a_s = None, None
         st = 'upcoming'
         if home != 'TBD':
-            hs, a_s = sim(home, away)
-            st = 'completed'
+            try:
+                match_dt = datetime.datetime.strptime(dt + ' ' + tm, '%Y-%m-%d %H:%M')
+                is_past = match_dt <= now
+            except (ValueError, TypeError):
+                is_past = False
+            if is_past:
+                hs, a_s = sim(home, away)
+                st = 'completed'
         query(
             'INSERT INTO fixtures (match_number, round, group_name, home_team, away_team, date, match_time, venue, city, home_score, away_score, status) '
             f'VALUES ({p()}, {p()}, {p()}, {p()}, {p()}, {p()}, {p()}, {p()}, {p()}, {p()}, {p()}, {p()})',
