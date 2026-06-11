@@ -271,6 +271,13 @@ def init_db():
         except Exception:
             db.rollback()
 
+        # Seed test users for development
+        try:
+            seed_test_users()
+            db.commit()
+        except Exception:
+            db.rollback()
+
         # migration: add match_time column if missing
         try:
             if is_pg():
@@ -483,6 +490,25 @@ def user_bets(user_id):
                 d['selections'] = None
         bets.append(d)
     return bets
+
+
+def seed_test_users():
+    db = get_db()
+    rows = [
+        ('testchecker', 'test'),
+        ('player1', 'test'),
+        ('player2', 'test'),
+        ('player3', 'test'),
+    ]
+    for username, pw in rows:
+        existing = query(f'SELECT id FROM users WHERE username = {p()}', (username,)).fetchone()
+        if existing:
+            continue
+        pw_hash = generate_password_hash(pw, method='pbkdf2:sha256')
+        if is_pg():
+            query("INSERT INTO users (username, password_hash) VALUES (%s, %s)", (username, pw_hash))
+        else:
+            query("INSERT INTO users (username, password_hash) VALUES (?, ?)", (username, pw_hash))
 
 
 def user_bet_stats(user_id):
