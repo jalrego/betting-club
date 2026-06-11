@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h1 style="margin-bottom: 1.5rem;">Fixtures</h1>
+
+{% for round_name in rounds %}
+  {% set round_data = fixtures.get(round_name) %}
+  {% if round_data %}
+  <div class="card">
+    <h2>{{ round_name }}</h2>
+
+    {% if round_name == 'Group Stage' %}
+      {% for group_name, group_fixtures in round_data.items() %}
+      <h3 style="font-size:0.8rem;color:#fbbf24;margin-bottom:0.4rem;margin-top:0.75rem;">Group {{ group_name }}</h3>
+      {% for f in group_fixtures %}
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:0.35rem 0;border-bottom:1px solid #1a1e2a;gap:0.5rem;">
+        <div style="flex:1;text-align:right;font-size:0.85rem;">{{ f.home_team }}</div>
+        <div style="flex-shrink:0;font-size:0.8rem;color:#fbbf24;font-weight:600;min-width:3rem;text-align:center;">
+          {% if f.home_score is not none and f.away_score is not none %}
+            {{ f.home_score }} &ndash; {{ f.away_score }}
+          {% else %}
+            <span class="text-muted" style="font-size:0.65rem;">vs</span>
+          {% endif %}
+        </div>
+        <div style="flex:1;text-align:left;font-size:0.85rem;">{{ f.away_team }}</div>
+        <div style="flex-shrink:0;text-align:right;font-size:0.65rem;color:#7f8494;min-width:4rem;">
+          {{ f.date[-5:] }}
+          {% if f.venue and f.venue != 'TBD' %}<br><span style="font-size:0.6rem;">{{ f.city }}</span>{% endif %}
+        </div>
+      </div>
+      {% endfor %}
+      {% endfor %}
+
+    {% else %}
+      {% for f in round_data %}
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:0.35rem 0;border-bottom:1px solid #1a1e2a;gap:0.5rem;">
+        <div style="flex:1;text-align:right;font-size:0.85rem;">{{ f.home_team }}</div>
+        <div style="flex-shrink:0;font-size:0.8rem;color:#fbbf24;font-weight:600;min-width:3rem;text-align:center;">
+          {% if f.home_score is not none and f.away_score is not none %}
+            {{ f.home_score }} &ndash; {{ f.away_score }}
+          {% else %}
+            <span class="text-muted" style="font-size:0.65rem;">vs</span>
+          {% endif %}
+        </div>
+        <div style="flex:1;text-align:left;font-size:0.85rem;">{{ f.away_team }}</div>
+        <div style="flex-shrink:0;text-align:right;font-size:0.65rem;color:#7f8494;min-width:4rem;">
+          {{ f.date[-5:] }}
+          {% if f.venue and f.venue != 'TBD' %}<br><span style="font-size:0.6rem;">{{ f.city }}</span>{% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    {% endif %}
+
+  </div>
+  {% endif %}
+{% endfor %}
+
+{% endblock %}

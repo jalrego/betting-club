@@ -208,9 +208,10 @@
     <div>
       {% if session.user_id %}
         <span class="text-muted text-sm">👤 {{ session.username }}</span>
-        <a href="{{ url_for('dashboard') }}">📊 Dashboard</a>
-        <a href="{{ url_for('leaderboard') }}">🏆 Leaderboard</a>
-        <a href="{{ url_for('logout') }}">🚪 Logout</a>
+        <a href="{{ url_for('dashboard') }}">Dashboard</a>
+        <a href="{{ url_for('fixtures') }}">Fixtures</a>
+        <a href="{{ url_for('leaderboard') }}">Leaderboard</a>
+        <a href="{{ url_for('logout') }}">Logout</a>
       {% else %}
         <a href="{{ url_for('login') }}">🔐 Login</a>
         <a href="{{ url_for('register') }}">📝 Register</a>
