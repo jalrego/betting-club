@@ -551,6 +551,9 @@ def cleanup_prod_data():
             query(f'DELETE FROM bets WHERE user_id = {p()}', (uid,))
             query(f'DELETE FROM users WHERE id = {p()}', (uid,))
     logging.info('cleanup_prod_data: fixed joaopjoaquim bet, removed test accounts')
+
+
+def user_bet_stats(user_id):
     db = get_db()
     rows = query(
         f'SELECT result, COUNT(*) as cnt, SUM(stake) as total FROM bets WHERE user_id = {p()} GROUP BY result',
