@@ -88,6 +88,8 @@
     .btn-primary:hover { background: #fcd34d; }
     .btn-secondary { background: #1e2230; color: #e1e4ed; }
     .btn-secondary:hover { background: #2a2f42; }
+    .btn-danger { background: #dc2626; color: #fff; }
+    .btn-danger:hover { background: #ef4444; }
     .btn-sm { padding: 0.2rem 0.5rem; font-size: 0.7rem; }
     label { display: block; margin-bottom: 0.3rem; font-size: 0.8rem; color: #7f8494; }
     input, textarea {
@@ -191,10 +193,20 @@
       font-size: 0.75rem; font-weight: 700; color: #fff; flex-shrink: 0;
     }
     .avatar-sm { width: 22px; height: 22px; font-size: 0.6rem; }
+    .nav-toggle { display: none; background: none; border: 1px solid #333; color: #ccc; padding: 0.4rem 0.7rem; border-radius: 6px; font-size: 1.2rem; cursor: pointer; line-height: 1; }
+    .nav-toggle:hover { background: #1e1e2e; }
+    .nav-links { display: flex; align-items: center; gap: 0 0.6rem; flex-wrap: wrap; }
+    .nav-links a { white-space: nowrap; }
+    .nav-avatar { display: inline-flex; align-items: center; gap: 0.3rem; margin-right: 0.3rem; }
     @media (max-width: 640px) {
-      nav { flex-direction: column; gap: 0.5rem; padding: 0.75rem 1rem; }
-      nav div { display: flex; flex-wrap: wrap; justify-content: center; }
-      nav a { margin: 0 0.5rem; }
+      nav { flex-direction: column; gap: 0.5rem; padding: 0.75rem 1rem; position: relative; }
+      .nav-toggle { display: block; position: absolute; top: 0.75rem; right: 1rem; }
+      .nav-links { display: none; flex-direction: column; align-items: stretch; width: 100%; gap: 0.25rem; padding-top: 0.5rem; }
+      .nav-links.open { display: flex; }
+      .nav-links a { display: block; padding: 0.4rem 0.5rem; border-radius: 4px; }
+      .nav-links a:hover { background: #1e1e2e; }
+      .nav-avatar { padding: 0.4rem 0.5rem; }
+      nav .brand { padding-right: 3rem; }
       .container { padding: 0 0.75rem; margin: 1rem auto; }
       .card { padding: 1rem; }
       .stat-box { padding: 0.5rem; }
@@ -217,18 +229,25 @@
       <span>FIFA World Cup <span style="font-weight:400;">26</span> <span style="font-weight:400;font-size:0.7rem;color:#7f8494;">Canada · Mexico · USA</span></span>
       <span style="margin-left:0.75rem;padding-left:0.75rem;border-left:1px solid #262a36;font-size:0.8rem;color:#7f8494;">Betting Club</span>
     </div>
-    <div>
+    <button class="nav-toggle" onclick="document.querySelector('.nav-links').classList.toggle('open')">☰</button>
+    <div class="nav-links">
       {% if session.user_id %}
         {% set colors = ['#6366f1','#22c55e','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#ec4899','#10b981'] %}
-        <span class="avatar" style="background:{{ colors[session.username|length % colors|length] }};">
-          {{ session.username[:1]|upper }}
+        <span class="nav-avatar">
+          <span class="avatar" style="background:{{ colors[session.username|length % colors|length] }};">
+            {{ session.username[:1]|upper }}
+          </span>
+          <span class="text-muted text-sm">{{ session.username }}</span>
         </span>
-        <span class="text-muted text-sm">{{ session.username }}</span>
         <a href="{{ url_for('dashboard') }}">Dashboard</a>
         <a href="{{ url_for('fixtures') }}">Fixtures</a>
         <a href="{{ url_for('standings') }}">Standings</a>
         <a href="{{ url_for('bracket') }}">Bracket</a>
         <a href="{{ url_for('leaderboard') }}">Leaderboard</a>
+        <a href="{{ url_for('profile') }}">Profile</a>
+        {% if session.username == 'Joao' %}
+          <a href="{{ url_for('admin_panel') }}">Admin</a>
+        {% endif %}
         <a href="{{ url_for('logout') }}">Logout</a>
       {% else %}
         <a href="{{ url_for('login') }}">🔐 Login</a>

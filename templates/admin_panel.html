@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="welcome-banner">
+  <h1>Admin Panel</h1>
+  <p>Manage users and fixtures</p>
+</div>
+
+<div class="card" style="margin-bottom:1.5rem;">
+  <h3>Fixture Actions</h3>
+  <div style="display:flex;gap:0.75rem;flex-wrap:wrap;margin-top:1rem;">
+    <form method="POST" style="display:inline;">
+      <input type="hidden" name="action" value="sync_fixtures">
+      <button type="submit" class="btn btn-primary">Sync Fixtures</button>
+    </form>
+    <form method="POST" style="display:inline;" onsubmit="return confirm('Re-seed all fixtures from scratch? This will reset all scores.');">
+      <input type="hidden" name="action" value="reseed_fixtures">
+      <button type="submit" class="btn btn-secondary">Re-Seed Fixtures</button>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <h3>Users ({{ users|length }})</h3>
+  <div style="overflow-x:auto;margin-top:1rem;">
+    <table style="width:100%;border-collapse:collapse;font-size:0.9rem;">
+      <thead>
+        <tr style="border-bottom:1px solid #262a36;text-align:left;">
+          <th style="padding:0.5rem;">User</th>
+          <th style="padding:0.5rem;">Balance</th>
+          <th style="padding:0.5rem;">Bets</th>
+          <th style="padding:0.5rem;">Wins</th>
+          <th style="padding:0.5rem;">Staked</th>
+          <th style="padding:0.5rem;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in users %}
+        <tr style="border-bottom:1px solid #1a1e2a;">
+          <td style="padding:0.5rem;"><strong>{{ u.username }}</strong></td>
+          <td style="padding:0.5rem;">${{ "%.2f"|format(u.balance) }}</td>
+          <td style="padding:0.5rem;">{{ u.bet_count }}</td>
+          <td style="padding:0.5rem;">{{ u.wins }}/{{ u.total }}</td>
+          <td style="padding:0.5rem;">${{ "%.2f"|format(u.staked) }}</td>
+          <td style="padding:0.5rem;">
+            <form method="POST" style="display:inline;" onsubmit="return confirm('Delete all bets for {{ u.username }}?');">
+              <input type="hidden" name="action" value="delete_all_bets">
+              <input type="hidden" name="user_id" value="{{ u.id }}">
+              <button type="submit" class="btn btn-sm btn-secondary" style="font-size:0.75rem;">Clear Bets</button>
+            </form>
+            <form method="POST" style="display:inline;" onsubmit="return confirm('Reset balance for {{ u.username }}?');">
+              <input type="hidden" name="action" value="reset_balance">
+              <input type="hidden" name="user_id" value="{{ u.id }}">
+              <button type="submit" class="btn btn-sm btn-secondary" style="font-size:0.75rem;">Reset Bal</button>
+            </form>
+            <form method="POST" style="display:inline;" onsubmit="return confirm('Delete {{ u.username }} and all their data? This cannot be undone.');">
+              <input type="hidden" name="action" value="delete_user">
+              <input type="hidden" name="user_id" value="{{ u.id }}">
+              <button type="submit" class="btn btn-sm btn-danger" style="font-size:0.75rem;">Delete</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

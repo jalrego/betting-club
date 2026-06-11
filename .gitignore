@@ -6,4 +6,5 @@ static/uploads/*
 .env
 *.pyc
 .DS_Store
+.github/
 

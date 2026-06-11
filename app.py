@@ -664,6 +664,34 @@ def logout():
     return redirect(url_for('login'))
 
 
+@app.route('/profile', methods=['GET', 'POST'])
+@login_required
+def profile():
+    db = get_db()
+    user_id = session['user_id']
+    user = query(f'SELECT * FROM users WHERE id = {p()}', (user_id,)).fetchone()
+
+    if request.method == 'POST':
+        current = request.form.get('current_password', '')
+        new_pass = request.form.get('new_password', '')
+        confirm = request.form.get('confirm_password', '')
+
+        if not check_password_hash(user['password_hash'], current):
+            flash('Current password is incorrect.', 'danger')
+        elif not new_pass or len(new_pass) < 4:
+            flash('New password must be at least 4 characters.', 'danger')
+        elif new_pass != confirm:
+            flash('New passwords do not match.', 'danger')
+        else:
+            new_hash = generate_password_hash(new_pass, method='pbkdf2:sha256')
+            query(f'UPDATE users SET password_hash = {p()} WHERE id = {p()}', (new_hash, user_id))
+            db.commit()
+            flash('Password updated successfully!', 'success')
+            return redirect(url_for('profile'))
+
+    return render_template('profile.html', username=user['username'])
+
+
 @app.route('/dashboard')
 @login_required
 def dashboard():
@@ -879,11 +907,71 @@ def delete_bet(bet_id):
     return redirect(url_for('dashboard'))
 
 
-@app.route('/admin')
+@app.route('/admin', methods=['GET', 'POST'])
 @login_required
 @admin_required
-def admin():
-    return redirect(url_for('leaderboard'))
+def admin_panel():
+    db = get_db()
+    users = query('SELECT id, username FROM users ORDER BY username').fetchall()
+
+    if request.method == 'POST':
+        action = request.form.get('action')
+
+        if action == 'delete_user':
+            uid = request.form.get('user_id', type=int)
+            if uid:
+                query('DELETE FROM bets WHERE user_id = %s' if is_pg() else 'DELETE FROM bets WHERE user_id = ?', (uid,))
+                query('DELETE FROM balance_records WHERE user_id = %s' if is_pg() else 'DELETE FROM balance_records WHERE user_id = ?', (uid,))
+                query('DELETE FROM users WHERE id = %s' if is_pg() else 'DELETE FROM users WHERE id = ?', (uid,))
+                db.commit()
+                flash('User and all their data deleted.', 'success')
+
+        elif action == 'reset_balance':
+            uid = request.form.get('user_id', type=int)
+            if uid:
+                query('DELETE FROM balance_records WHERE user_id = %s' if is_pg() else 'DELETE FROM balance_records WHERE user_id = ?', (uid,))
+                db.commit()
+                flash(f'Balance records wiped for user {uid}. They will be re-credited on next bet.', 'success')
+
+        elif action == 'delete_all_bets':
+            uid = request.form.get('user_id', type=int)
+            if uid:
+                query('DELETE FROM bets WHERE user_id = %s' if is_pg() else 'DELETE FROM bets WHERE user_id = ?', (uid,))
+                query('DELETE FROM balance_records WHERE user_id = %s' if is_pg() else 'DELETE FROM balance_records WHERE user_id = ?', (uid,))
+                db.commit()
+                flash(f'All bets and balance records deleted for user {uid}.', 'success')
+
+        elif action == 'sync_fixtures':
+            ok = sync_fixtures_from_api()
+            if ok:
+                flash('Fixtures synced from wheniskickoff.com!', 'success')
+            else:
+                flash('Failed to sync fixtures.', 'danger')
+
+        elif action == 'reseed_fixtures':
+            seed_fixtures()
+            flash('Fixtures re-seeded successfully.', 'success')
+
+        return redirect(url_for('admin_panel'))
+
+    user_data = []
+    for u in users:
+        bal = user_balance(u['id'])
+        stats = user_bet_stats(u['id'])
+        bet_count = query(
+            f'SELECT count(*) as cnt FROM bets WHERE user_id = {p()}', (u['id'],)
+        ).fetchone()['cnt']
+        user_data.append({
+            'id': u['id'],
+            'username': u['username'],
+            'balance': bal / 100.0,
+            'bet_count': bet_count,
+            'wins': stats.get('wins', 0),
+            'total': stats.get('total', 0),
+            'staked': stats.get('staked', 0) / 100.0,
+        })
+
+    return render_template('admin_panel.html', users=user_data)
 
 
 @app.route('/fixtures')
