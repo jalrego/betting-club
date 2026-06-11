@@ -1337,6 +1337,7 @@ def user_profile(user_id):
         # check if current user is admin
         cur_user = query(f'SELECT username FROM users WHERE id = {p()}', (session['user_id'],)).fetchone()
         is_admin = cur_user and cur_user['username'] == 'Joao'
+        is_owner = user_id == session['user_id']
     except Exception as e:
         logging.error(f"user_profile error: {e}")
         raise
@@ -1348,7 +1349,8 @@ def user_profile(user_id):
                            stats=stats,
                            starting=STARTING_BALANCE / 100.0,
                            fixtures=fixtures_for_select,
-                           is_admin=is_admin)
+                           is_admin=is_admin,
+                           is_owner=is_owner)
 import re
 
 VERSUS_RE = re.compile(r'^\s*(.+?)\s+vs\s+(.+?)\s*$')

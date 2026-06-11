@@ -46,7 +46,7 @@
         <th>Odds</th>
         <th>Pick</th>
         <th>Result</th>
-        {% if is_admin %}<th></th>{% endif %}
+        {% if is_admin or is_owner %}<th></th>{% endif %}
       </tr>
     </thead>
     <tbody>
@@ -89,7 +89,7 @@
             <span class="gold">💵 Cashed</span>
           {% endif %}
         </td>
-        {% if is_admin %}
+        {% if is_admin or is_owner %}
         <td>
           {% if bet.result == 'pending' %}
           <form method="POST" action="{{ url_for('settle_bet', bet_id=bet.id) }}" style="display:inline">

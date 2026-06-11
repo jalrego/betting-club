@@ -62,7 +62,7 @@
               <td style="padding:0.55rem 0 0.55rem 0.5rem;vertical-align:middle;text-align:right;white-space:nowrap;">
                 {% if f.bet_count > 0 %}
                   <span style="display:inline-flex;align-items:center;gap:0.25rem;padding:0.15rem 0.5rem;border-radius:999px;background:rgba(251,191,36,0.1);color:#fbbf24;font-size:0.7rem;font-weight:600;">
-                    {{ f.bet_count }} bet{% if f.bet_count > 1 %}s{% endif %} · &euro;{{ "%.0f"|format(f.bet_total) }}
+                    {{ f.bet_count }} bet{% if f.bet_count > 1 %}s{% endif %} · &euro;{{ "%.2f"|format(f.bet_total) }}
                   </span>
                 {% endif %}
               </td>
