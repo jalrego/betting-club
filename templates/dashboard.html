@@ -201,6 +201,17 @@
   </form>
 </div>
 
+<div id="confirmModal" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,0.6);align-items:center;justify-content:center;">
+  <div style="background:#13161e;border:1px solid #262a36;border-radius:12px;padding:1.5rem;max-width:420px;width:90%;margin:auto;">
+    <h3 style="margin:0 0 1rem;">Confirm Bet</h3>
+    <div id="confirmSummary" style="font-size:0.9rem;color:#e1e4ed;line-height:1.7;"></div>
+    <div style="display:flex;gap:0.75rem;margin-top:1.25rem;justify-content:flex-end;">
+      <button onclick="closeConfirm()" class="btn btn-secondary">No</button>
+      <button id="confirmYes" class="btn btn-primary">Yes, Place Bet</button>
+    </div>
+  </div>
+</div>
+
 {% if activity %}
 <div class="card">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem;">
@@ -367,13 +378,52 @@ function filterMatches() {
   }
 }
 
+function showConfirm(event) {
+  event.preventDefault();
+  var isMulti = document.querySelector('input[name="bet_type_switch"]:checked').value === 'multi';
+  var summary = document.getElementById('confirmSummary');
+  summary.innerHTML = '';
+
+  if (isMulti) {
+    var selections = document.querySelectorAll('.multi-leg');
+    var picks = document.querySelectorAll('input[name="multi_pick[]"]');
+    var matchInfos = document.querySelectorAll('.multiMatchInfo');
+    var html = '<div style="margin-bottom:0.5rem;"><strong style="color:#fbbf24;">Multi-Bet</strong></div>';
+    for (var i = 0; i < selections.length; i++) {
+      var m = matchInfos[i] ? matchInfos[i].value : '';
+      var p = picks[i] ? picks[i].value : '';
+      if (m) html += '<div style="padding:0.25rem 0;border-bottom:1px solid #1a1e2a;">' + (i+1) + '. ' + m + ' → <strong>' + p + '</strong></div>';
+    }
+    html += '<div style="margin-top:0.75rem;">Stake: <strong>&euro;' + parseFloat(document.getElementById('stake_multi').value || 0).toFixed(2) + '</strong></div>';
+    html += '<div>Odds: <strong>' + parseFloat(document.getElementById('odds_multi').value || 0).toFixed(2) + '</strong></div>';
+    summary.innerHTML = html;
+  } else {
+    var matchInfo = document.getElementById('match_info').value || document.getElementById('matchSearch').value || 'Not selected';
+    var pick = document.getElementById('pick').value || '—';
+    var stake = parseFloat(document.getElementById('stake').value || 0).toFixed(2);
+    var odds = parseFloat(document.getElementById('odds').value || 0).toFixed(2);
+    summary.innerHTML =
+      '<div><span style="color:#7f8494;">Match:</span> <strong>' + matchInfo + '</strong></div>' +
+      '<div><span style="color:#7f8494;">Pick:</span> <strong>' + pick + '</strong></div>' +
+      '<div><span style="color:#7f8494;">Stake:</span> <strong>&euro;' + stake + '</strong></div>' +
+      '<div><span style="color:#7f8494;">Odds:</span> <strong>' + odds + '</strong></div>' +
+      '<div style="margin-top:0.5rem;padding-top:0.5rem;border-top:1px solid #262a36;"><span style="color:#7f8494;">Potential return:</span> <strong>&euro;' + (parseFloat(stake) * parseFloat(odds)).toFixed(2) + '</strong></div>';
+  }
+  document.getElementById('confirmModal').style.display = 'flex';
+}
+function closeConfirm() {
+  document.getElementById('confirmModal').style.display = 'none';
+}
+
 document.addEventListener('DOMContentLoaded', function() {
   var bal = getBalance();
   var max = Math.min(bal, 50);
   document.getElementById('stakeSlider').max = max;
   document.getElementById('stakeSliderMulti').max = max;
-  document.getElementById('betForm').addEventListener('submit', function() {
-    document.getElementById('matchSearch').disabled = true;
+  document.getElementById('betForm').addEventListener('submit', showConfirm);
+  document.getElementById('confirmYes').addEventListener('click', function() {
+    document.getElementById('betForm').removeEventListener('submit', showConfirm);
+    document.getElementById('betForm').submit();
   });
   stakeSync(document.getElementById('stakeSlider').value);
   stakeSyncMulti(document.getElementById('stakeSliderMulti').value);
