@@ -205,10 +205,14 @@ def init_db():
         except Exception:
             db.rollback()
 
-        # Seed fixtures if empty
+        # Seed/refresh fixtures (always re-seed to match current data)
         try:
             existing = query('SELECT COUNT(*) as cnt FROM fixtures').fetchone()
-            if existing['cnt'] == 0:
+            if existing['cnt'] != 104:
+                if is_pg():
+                    query('TRUNCATE TABLE fixtures')
+                else:
+                    query('DELETE FROM fixtures')
                 seed_fixtures()
                 db.commit()
         except Exception:
