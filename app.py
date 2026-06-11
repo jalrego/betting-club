@@ -746,6 +746,14 @@ def dashboard():
             next_match = dict(next_match)
             next_match['lisbon_date'], next_match['lisbon_time'] = lisbon_time(
                 next_match['date'], next_match['match_time'], next_match.get('city', ''))
+        # most recent completed match
+        current_match = query(
+            f'SELECT * FROM fixtures WHERE home_team != \'TBD\' AND away_team != \'TBD\' AND home_score IS NOT NULL ORDER BY date DESC, match_time DESC LIMIT 1'
+        ).fetchone()
+        if current_match:
+            current_match = dict(current_match)
+            current_match['lisbon_date'], current_match['lisbon_time'] = lisbon_time(
+                current_match['date'], current_match['match_time'], current_match.get('city', ''))
     except Exception as e:
         logging.error(f"dashboard error: {e}")
         raise
@@ -759,6 +767,7 @@ def dashboard():
                            balance_history=balance_history,
                            starting=STARTING_BALANCE / 100.0,
                            next_match=next_match,
+                           current_match=current_match,
                            fixture_scores=fixture_scores)
 
 

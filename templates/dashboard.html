@@ -13,6 +13,36 @@
   </div>
 </div>
 
+{% if current_match %}
+<div class="card card-green">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;">
+    <span style="font-size:0.65rem;color:#7f8494;text-transform:uppercase;letter-spacing:0.08em;font-weight:500;">Current Match</span>
+    <span class="badge badge-won">Just Played</span>
+  </div>
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:0.75rem;">
+    <div style="text-align:center;flex:1;">
+      <div style="font-size:2rem;margin-bottom:0.25rem;">{{ team_flag(current_match.home_team) }}</div>
+      <div style="font-weight:600;font-size:0.9rem;">{{ current_match.home_team }}</div>
+    </div>
+    <div style="text-align:center;flex-shrink:0;">
+      <div style="background:#1a1e2a;padding:0.5rem 1rem;border-radius:10px;font-weight:800;font-size:1.3rem;font-family:'Oswald',sans-serif;letter-spacing:0.04em;color:#e1e4ed;">
+        {{ current_match.home_score }} - {{ current_match.away_score }}
+      </div>
+    </div>
+    <div style="text-align:center;flex:1;">
+      <div style="font-size:2rem;margin-bottom:0.25rem;">{{ team_flag(current_match.away_team) }}</div>
+      <div style="font-weight:600;font-size:0.9rem;">{{ current_match.away_team }}</div>
+    </div>
+  </div>
+  <div style="text-align:center;margin-top:0.75rem;font-size:0.8rem;color:#7f8494;">
+    {{ current_match.lisbon_date[-5:] }} &middot; {{ current_match.lisbon_time }}
+    {% if current_match.venue and current_match.venue != 'TBD' %}
+      &middot; {{ current_match.city }}
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+
 {% if next_match %}
 <div class="card">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;">
