@@ -702,6 +702,11 @@ def dashboard():
             (user_id,)
         ).fetchall()
         balance_history = [dict(r) for r in hist]
+        # fixture scores lookup for bet details (include future matches too for info)
+        score_rows = query(
+            'SELECT match_number, home_team, away_team, home_score, away_score, status, date, match_time FROM fixtures'
+        ).fetchall()
+        fixture_scores = {str(r['match_number']): r for r in score_rows}
         # next upcoming match
         next_match = query(
             f'SELECT * FROM fixtures WHERE home_team != \'TBD\' AND away_team != \'TBD\' AND home_score IS NULL ORDER BY date ASC, match_time ASC LIMIT 1'
@@ -722,7 +727,8 @@ def dashboard():
                            fixtures=fixtures_for_select,
                            balance_history=balance_history,
                            starting=STARTING_BALANCE / 100.0,
-                           next_match=next_match)
+                           next_match=next_match,
+                           fixture_scores=fixture_scores)
 
 
 @app.route('/bet/new', methods=['POST'])
@@ -964,10 +970,25 @@ def fixtures():
             'SELECT * FROM fixtures ORDER BY match_number'
         ).fetchall()
         fixtures_list = [dict(r) for r in rows]
+        # bet totals per match
+        bet_data = query(
+            f'SELECT match_number, COUNT(*) as bet_count, SUM(stake) as total_staked '
+            f'FROM bets WHERE match_number IS NOT NULL GROUP BY match_number'
+        ).fetchall()
+        bet_map = {}
+        for b in bet_data:
+            bet_map[b['match_number']] = {
+                'count': b['bet_count'],
+                'total': (b['total_staked'] or 0) / 100.0,
+            }
+        for f in fixtures_list:
+            info = bet_map.get(f['match_number'])
+            f['bet_count'] = info['count'] if info else 0
+            f['bet_total'] = info['total'] if info else 0
+
         grouped = {}
         for f in fixtures_list:
             grouped.setdefault(f['round'], []).append(f)
-        # also group group-stage by group_name
         for round_name, round_fixtures in grouped.items():
             if round_name == 'Group Stage':
                 by_group = {}

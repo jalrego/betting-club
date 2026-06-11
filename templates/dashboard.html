@@ -250,7 +250,7 @@
     </thead>
     <tbody id="betsBody">
       {% for bet in bets[:5] %}
-      <tr data-result="{{ bet.result }}">
+      <tr data-result="{{ bet.result }}" onclick="toggleBetDetail(this)" style="cursor:pointer;">
         <td>
           {% if bet.bet_type == 'multi' %}
             <span class="gold" style="font-size:0.7rem;font-weight:600;">MULTI</span>
@@ -261,7 +261,7 @@
         <td>
           <strong>{{ bet.match_info }}</strong>
           {% if bet.selections %}
-            <details style="margin-top: 0.25rem;">
+            <details style="margin-top: 0.25rem;" onclick="event.stopPropagation()">
               <summary class="text-muted text-sm" style="cursor:pointer;font-size:0.7rem;">{{ bet.selections|length }} legs</summary>
               <div style="margin-top: 0.25rem; padding-left: 0.5rem; border-left: 2px solid #262a36;">
                 {% for leg in bet.selections %}
@@ -287,7 +287,7 @@
             <span class="badge badge-cashed">Cashed</span>
           {% endif %}
         </td>
-        <td>
+        <td onclick="event.stopPropagation()">
           {% if bet.result == 'pending' %}
           <form method="POST" action="{{ url_for('settle_bet', bet_id=bet.id) }}" style="display:inline">
             <button name="result" value="won" class="btn btn-secondary btn-sm">Won</button>
@@ -299,6 +299,36 @@
           </form>
         </td>
       </tr>
+      {% set fs = fixture_scores.get(bet.match_number|string) %}
+      <tr class="bet-detail" style="display:none;background:#141824;">
+        <td colspan="7" style="padding:0.75rem 1rem;">
+          <div style="display:flex;align-items:center;flex-wrap:wrap;gap:0.75rem;font-size:0.85rem;">
+            {% if fs and fs.home_score is not none %}
+            <span><strong>{{ fs.home_team }} {{ fs.home_score }} &ndash; {{ fs.away_score }} {{ fs.away_team }}</strong></span>
+            {% elif fs %}
+            <span><strong>{{ fs.home_team }} vs {{ fs.away_team }}</strong></span>
+            {% endif %}
+            <span style="color:#7f8494;">Pick: <strong>{{ bet.pick }}</strong></span>
+            {% if bet.result == 'pending' and fs %}
+              {% set fs_status = fs.status %}
+              {% if fs.home_score is not none and fs_status == 'completed' %}
+                <span class="badge badge-lost">Settled</span>
+              {% elif fs_status == 'live' %}
+                <span class="badge badge-pending">LIVE</span>
+              {% else %}
+                <span class="badge badge-pending">Upcoming</span>
+              {% endif %}
+            {% elif bet.result == 'won' %}
+              <span class="badge badge-won">Won</span>
+            {% elif bet.result == 'lost' %}
+              <span class="badge badge-lost">Lost</span>
+            {% elif bet.result == 'cashout' %}
+              <span class="badge badge-cashed">Cashed</span>
+            {% endif %}
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
       {% endfor %}
     </tbody>
   </table>
@@ -591,8 +621,14 @@ function sliderSyncMulti(val) {
   document.getElementById('stakeDisplayMulti').textContent = v.toFixed(2);
   validateStake(v, 'balanceWarningMulti', document.querySelector('#betForm .btn-primary'));
 }
+function toggleBetDetail(row) {
+  var detail = row.nextElementSibling;
+  if (detail && detail.classList.contains('bet-detail')) {
+    detail.style.display = detail.style.display === 'none' || detail.style.display === '' ? 'table-row' : 'none';
+  }
+}
 function filterBets(filter) {
-  var rows = document.querySelectorAll('#betsBody tr');
+  var rows = document.querySelectorAll('#betsBody > tr');
   var btns = document.querySelectorAll('.filter-btn');
   btns.forEach(function(b) {
     if (b.getAttribute('data-filter') === filter) {
