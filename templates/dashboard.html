@@ -1,5 +1,9 @@
 {% extends "base.html" %}
 {% block content %}
+<style>
+.filter-btn:hover { opacity: 0.85; }
+.filter-btn { transition: background 0.15s, color 0.15s; }
+</style>
 
 <div class="welcome-banner" style="padding:1.5rem 1rem;">
   <h1 style="margin:0;">FIFA World Cup 26</h1>
@@ -247,6 +251,11 @@
       <a href="{{ url_for('user_profile', user_id=session.user_id) }}" class="text-sm" style="color:#7f8494;">View all ({{ bets|length }}) &rarr;</a>
     {% endif %}
   </div>
+  <div style="display:flex;gap:0.25rem;padding:0.5rem 1rem 0 1rem;">
+    <button class="filter-btn active" data-filter="all" onclick="filterBets('all')" style="background:#fbbf24;color:#0a0c12;border:none;padding:0.25rem 0.75rem;border-radius:6px;font-size:0.75rem;font-weight:600;cursor:pointer;">All</button>
+    <button class="filter-btn" data-filter="pending" onclick="filterBets('pending')" style="background:#1e2230;color:#e1e4ed;border:none;padding:0.25rem 0.75rem;border-radius:6px;font-size:0.75rem;cursor:pointer;">Active</button>
+    <button class="filter-btn" data-filter="settled" onclick="filterBets('settled')" style="background:#1e2230;color:#e1e4ed;border:none;padding:0.25rem 0.75rem;border-radius:6px;font-size:0.75rem;cursor:pointer;">Settled</button>
+  </div>
   <div class="table-wrap">
   <table>
     <thead>
@@ -260,9 +269,9 @@
         <th></th>
       </tr>
     </thead>
-    <tbody>
+    <tbody id="betsBody">
       {% for bet in bets[:5] %}
-      <tr>
+      <tr data-result="{{ bet.result }}">
         <td>
           {% if bet.bet_type == 'multi' %}
             <span class="gold" style="font-size:0.7rem;font-weight:600;">MULTI</span>
@@ -530,6 +539,27 @@ function sliderSyncMulti(val) {
   document.getElementById('stakeSliderMulti').value = v;
   document.getElementById('stakeDisplayMulti').textContent = v.toFixed(2);
   validateStake(v, 'balanceWarningMulti', document.querySelector('#betForm .btn-primary'));
+}
+function filterBets(filter) {
+  var rows = document.querySelectorAll('#betsBody tr');
+  var btns = document.querySelectorAll('.filter-btn');
+  btns.forEach(function(b) {
+    if (b.getAttribute('data-filter') === filter) {
+      b.style.background = '#fbbf24';
+      b.style.color = '#0a0c12';
+      b.style.fontWeight = '600';
+    } else {
+      b.style.background = '#1e2230';
+      b.style.color = '#e1e4ed';
+      b.style.fontWeight = '400';
+    }
+  });
+  rows.forEach(function(r) {
+    var result = r.getAttribute('data-result');
+    if (filter === 'all') { r.style.display = ''; }
+    else if (filter === 'pending') { r.style.display = (result === 'pending') ? '' : 'none'; }
+    else if (filter === 'settled') { r.style.display = (result && result !== 'pending') ? '' : 'none'; }
+  });
 }
 </script>
 
