@@ -1053,13 +1053,42 @@ def user_profile(user_id):
                            bets=bets,
                            stats=stats,
                            starting=STARTING_BALANCE / 100.0)
+import re
+
+VERSUS_RE = re.compile(r'^\s*(.+?)\s+vs\s+(.+?)\s*$')
+
+
+def migrate_match_numbers():
+    rows = query("SELECT id, match_info FROM bets WHERE match_number IS NULL").fetchall()
+    if not rows:
+        return
+    print(f'Migrating {len(rows)} bet(s) with NULL match_number...')
+    updated = 0
+    for r in rows:
+        m = VERSUS_RE.match(r['match_info'])
+        if not m:
+            continue
+        home, away = m.group(1).strip().lower(), m.group(2).strip().lower()
+        fixture = query(
+            f'SELECT match_number FROM fixtures WHERE LOWER(home_team) = {p()} AND LOWER(away_team) = {p()}',
+            (home, away)
+        ).fetchone()
+        if not fixture:
+            continue
+        query(f'UPDATE bets SET match_number = {p()} WHERE id = {p()}', (fixture['match_number'], r['id']))
+        updated += 1
+    if updated:
+        get_db().commit()
+        print(f'Migrated {updated} bet(s).')
 
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 8080))
     with app.app_context():
         init_db()
+        migrate_match_numbers()
     app.run(debug=True, host='0.0.0.0', port=port)
 else:
     with app.app_context():
         init_db()
+        migrate_match_numbers()
