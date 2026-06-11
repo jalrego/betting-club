@@ -1,58 +1,121 @@
 {% extends "base.html" %}
 {% block content %}
 
-<h1 style="margin-bottom: 1.5rem;">Fixtures</h1>
+<h1 style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem;">
+  <span>Fixtures</span>
+  <span style="font-size:0.7rem;color:#7f8494;font-weight:normal;">&middot; 104 matches</span>
+</h1>
 
 {% for round_name in rounds %}
   {% set round_data = fixtures.get(round_name) %}
   {% if round_data %}
-  <div class="card">
-    <h2>{{ round_name }}</h2>
+  <div class="card" style="padding: 1.5rem;">
+    <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1.25rem;">
+      <div style="width:4px;height:1.5rem;border-radius:2px;
+        {%- if round_name == 'Group Stage' %}background:#fbbf24;
+        {%- elif round_name in ('Round of 32','Round of 16') %}background:#60a5fa;
+        {%- elif round_name in ('Quarter-final','Semi-final') %}background:#a78bfa;
+        {%- elif round_name == 'Third Place' %}background:#94a3b8;
+        {%- elif round_name == 'Final' %}background:#f59e0b;
+        {%- else %}background:#fbbf24;{% endif %}">
+      </div>
+      <h2 style="margin:0;font-size:1.1rem;font-weight:700;">
+        {{ round_name }}
+      </h2>
+    </div>
 
     {% if round_name == 'Group Stage' %}
-      {% for group_name, group_fixtures in round_data.items() %}
-      <h3 style="font-size:0.8rem;color:#fbbf24;margin-bottom:0.4rem;margin-top:0.75rem;">Group {{ group_name }}</h3>
-      {% for f in group_fixtures %}
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:0.35rem 0;border-bottom:1px solid #1a1e2a;gap:0.5rem;">
-        <div style="flex:1;text-align:right;font-size:0.85rem;">{{ f.home_team }}</div>
-        <div style="flex-shrink:0;font-size:0.8rem;color:#fbbf24;font-weight:600;min-width:3rem;text-align:center;">
-          {% if f.home_score is not none and f.away_score is not none %}
-            {{ f.home_score }} &ndash; {{ f.away_score }}
-          {% else %}
-            <span class="text-muted" style="font-size:0.65rem;">vs</span>
-          {% endif %}
+      {% for group_name in ['A','B','C','D','E','F','G','H','I','J','K','L'] %}
+        {% set group_fixtures = round_data.get(group_name) %}
+        {% if group_fixtures %}
+        <div style="margin-bottom:1.25rem;">
+          <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem;">
+            <span style="display:inline-flex;align-items:center;justify-content:center;width:1.5rem;height:1.5rem;border-radius:4px;background:#fbbf24;color:#0f1119;font-size:0.7rem;font-weight:700;">{{ group_name }}</span>
+            <span style="font-size:0.75rem;color:#7f8494;">Group {{ group_name }}</span>
+          </div>
+          <table style="width:100%;border-collapse:collapse;">
+            {% for f in group_fixtures %}
+            <tr style="border-bottom:1px solid #1a1e2a;">
+              <td style="padding:0.55rem 0.5rem 0.55rem 0;vertical-align:middle;">
+                {% if f.match_time %}
+                <span style="font-size:0.65rem;color:#7f8494;display:block;">{{ f.date[-5:] }}</span>
+                <span style="font-size:0.6rem;color:#535768;display:block;">{{ f.match_time }}</span>
+                {% else %}
+                <span style="font-size:0.65rem;color:#7f8494;">{{ f.date[-5:] }}</span>
+                {% endif %}
+              </td>
+              <td style="padding:0.55rem 0.5rem;vertical-align:middle;text-align:right;font-size:0.85rem;font-weight:500;white-space:nowrap;">{{ f.home_team }}</td>
+              <td style="padding:0.55rem 0.5rem;vertical-align:middle;text-align:center;min-width:3.5rem;">
+                {% if f.home_score is not none and f.away_score is not none %}
+                  <span style="display:inline-block;padding:0.15rem 0.5rem;border-radius:4px;font-weight:700;font-size:0.85rem;
+                    {%- if f.status == 'live' %}background:#059669;color:#fff;
+                    {%- elif f.status == 'completed' %}background:#1e293b;color:#fbbf24;
+                    {%- else %}background:transparent;color:#7f8494;{% endif %}">
+                    {% if f.status == 'live' %}<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#fbbf24;margin-right:4px;animation:pulse 1.5s infinite;"></span>{% endif %}
+                    {{ f.home_score }} &ndash; {{ f.away_score }}
+                  </span>
+                {% else %}
+                  <span style="color:#535768;font-size:0.65rem;font-weight:600;">vs</span>
+                {% endif %}
+              </td>
+              <td style="padding:0.55rem 0.5rem;vertical-align:middle;text-align:left;font-size:0.85rem;font-weight:500;white-space:nowrap;">{{ f.away_team }}</td>
+              <td style="padding:0.55rem 0 0.55rem 0.5rem;vertical-align:middle;text-align:right;font-size:0.6rem;color:#535768;white-space:nowrap;max-width:7rem;overflow:hidden;text-overflow:ellipsis;">
+                {% if f.venue and f.venue != 'TBD' %}{{ f.city }}{% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </table>
         </div>
-        <div style="flex:1;text-align:left;font-size:0.85rem;">{{ f.away_team }}</div>
-        <div style="flex-shrink:0;text-align:right;font-size:0.65rem;color:#7f8494;min-width:4rem;">
-          {{ f.date[-5:] }}
-          {% if f.venue and f.venue != 'TBD' %}<br><span style="font-size:0.6rem;">{{ f.city }}</span>{% endif %}
-        </div>
-      </div>
-      {% endfor %}
+        {% endif %}
       {% endfor %}
 
     {% else %}
-      {% for f in round_data %}
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:0.35rem 0;border-bottom:1px solid #1a1e2a;gap:0.5rem;">
-        <div style="flex:1;text-align:right;font-size:0.85rem;">{{ f.home_team }}</div>
-        <div style="flex-shrink:0;font-size:0.8rem;color:#fbbf24;font-weight:600;min-width:3rem;text-align:center;">
-          {% if f.home_score is not none and f.away_score is not none %}
-            {{ f.home_score }} &ndash; {{ f.away_score }}
-          {% else %}
-            <span class="text-muted" style="font-size:0.65rem;">vs</span>
-          {% endif %}
-        </div>
-        <div style="flex:1;text-align:left;font-size:0.85rem;">{{ f.away_team }}</div>
-        <div style="flex-shrink:0;text-align:right;font-size:0.65rem;color:#7f8494;min-width:4rem;">
-          {{ f.date[-5:] }}
-          {% if f.venue and f.venue != 'TBD' %}<br><span style="font-size:0.6rem;">{{ f.city }}</span>{% endif %}
-        </div>
-      </div>
-      {% endfor %}
+      <table style="width:100%;border-collapse:collapse;">
+        {% for f in round_data %}
+        <tr style="border-bottom:1px solid #1a1e2a;">
+          <td style="padding:0.55rem 0.5rem 0.55rem 0;vertical-align:middle;">
+            {% if f.match_time %}
+            <span style="font-size:0.65rem;color:#7f8494;display:block;">{{ f.date[-5:] }}</span>
+            <span style="font-size:0.6rem;color:#535768;display:block;">{{ f.match_time }}</span>
+            {% else %}
+            <span style="font-size:0.65rem;color:#7f8494;">{{ f.date[-5:] }}</span>
+            {% endif %}
+          </td>
+          <td style="padding:0.55rem 0.5rem;vertical-align:middle;text-align:right;font-size:0.85rem;font-weight:500;white-space:nowrap;">
+            {% if f.home_team == 'TBD' %}<span style="color:#535768;font-style:italic;">TBD</span>{% else %}{{ f.home_team }}{% endif %}
+          </td>
+          <td style="padding:0.55rem 0.5rem;vertical-align:middle;text-align:center;min-width:3.5rem;">
+            {% if f.home_score is not none and f.away_score is not none %}
+              <span style="display:inline-block;padding:0.15rem 0.5rem;border-radius:4px;font-weight:700;font-size:0.85rem;
+                {%- if f.status == 'live' %}background:#059669;color:#fff;
+                {%- elif f.status == 'completed' %}background:#1e293b;color:#fbbf24;
+                {%- else %}background:transparent;color:#7f8494;{% endif %}">
+                {% if f.status == 'live' %}<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#fbbf24;margin-right:4px;animation:pulse 1.5s infinite;"></span>{% endif %}
+                {{ f.home_score }} &ndash; {{ f.away_score }}
+              </span>
+            {% else %}
+              <span style="color:#535768;font-size:0.65rem;font-weight:600;">vs</span>
+            {% endif %}
+          </td>
+          <td style="padding:0.55rem 0.5rem;vertical-align:middle;text-align:left;font-size:0.85rem;font-weight:500;white-space:nowrap;">
+            {% if f.away_team == 'TBD' %}<span style="color:#535768;font-style:italic;">TBD</span>{% else %}{{ f.away_team }}{% endif %}
+          </td>
+          <td style="padding:0.55rem 0 0.55rem 0.5rem;vertical-align:middle;text-align:right;font-size:0.6rem;color:#535768;white-space:nowrap;max-width:7rem;overflow:hidden;text-overflow:ellipsis;">
+            {% if f.venue and f.venue != 'TBD' %}{{ f.city }}{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </table>
     {% endif %}
-
   </div>
   {% endif %}
 {% endfor %}
+
+<style>
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+</style>
 
 {% endblock %}

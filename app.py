@@ -3,6 +3,7 @@ import sys
 import sqlite3
 import json
 import logging
+import urllib.request
 from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask import (
@@ -131,6 +132,7 @@ def init_db():
                     home_team TEXT NOT NULL,
                     away_team TEXT NOT NULL,
                     date TEXT NOT NULL,
+                    match_time TEXT,
                     venue TEXT,
                     city TEXT,
                     home_score INTEGER,
@@ -180,6 +182,7 @@ def init_db():
                     home_team TEXT NOT NULL,
                     away_team TEXT NOT NULL,
                     date TEXT NOT NULL,
+                    match_time TEXT,
                     venue TEXT,
                     city TEXT,
                     home_score INTEGER,
@@ -209,6 +212,16 @@ def init_db():
                 db.commit()
         except Exception:
             db.rollback()
+
+        # migration: add match_time column if missing
+        try:
+            if is_pg():
+                query("ALTER TABLE fixtures ADD COLUMN IF NOT EXISTS match_time TEXT")
+            else:
+                query("ALTER TABLE fixtures ADD COLUMN match_time TEXT")
+            db.commit()
+        except Exception:
+            db.rollback()
     except Exception as e:
         logging.error(f"init_db failed: {e}")
         raise
@@ -219,115 +232,122 @@ ROUNDS_FIXTURES = ['Group Stage', 'Round of 32', 'Round of 16', 'Quarter-final',
 
 def seed_fixtures():
     fixtures = [
-        # Group Stage - Matchday 1
-        (1, 'Group Stage', 'A', 'Mexico', 'South Africa', '2026-06-11', 'Estadio Azteca', 'Mexico City'),
-        (2, 'Group Stage', 'A', 'South Korea', 'Czechia', '2026-06-11', 'Estadio Akron', 'Guadalajara'),
-        (3, 'Group Stage', 'B', 'Canada', 'TBD', '2026-06-12', 'BMO Field', 'Toronto'),
-        (4, 'Group Stage', 'D', 'USA', 'Paraguay', '2026-06-12', 'SoFi Stadium', 'Los Angeles'),
-        (5, 'Group Stage', 'C', 'Haiti', 'Scotland', '2026-06-13', 'Gillette Stadium', 'Boston'),
-        (6, 'Group Stage', 'D', 'Australia', 'TBD', '2026-06-13', 'BC Place', 'Vancouver'),
-        (7, 'Group Stage', 'C', 'Brazil', 'Morocco', '2026-06-13', 'MetLife Stadium', 'New York/New Jersey'),
-        (8, 'Group Stage', 'B', 'Qatar', 'Switzerland', '2026-06-13', "Levi's Stadium", 'San Francisco'),
-        (9, 'Group Stage', 'E', "Cote d'Ivoire", 'Ecuador', '2026-06-14', 'Lincoln Financial Field', 'Philadelphia'),
-        (10, 'Group Stage', 'E', 'Germany', 'Curacao', '2026-06-14', 'NRG Stadium', 'Houston'),
-        (11, 'Group Stage', 'F', 'Netherlands', 'Japan', '2026-06-14', "AT&T Stadium", 'Dallas'),
-        (12, 'Group Stage', 'F', 'Tunisia', 'TBD', '2026-06-14', 'Estadio BBVA', 'Monterrey'),
-        (13, 'Group Stage', 'G', 'Belgium', 'Egypt', '2026-06-15', 'Lumen Field', 'Seattle'),
-        (14, 'Group Stage', 'G', 'Iran', 'New Zealand', '2026-06-15', 'SoFi Stadium', 'Los Angeles'),
-        (15, 'Group Stage', 'H', 'Spain', 'Cape Verde', '2026-06-15', 'Mercedes-Benz Stadium', 'Atlanta'),
-        (16, 'Group Stage', 'H', 'Saudi Arabia', 'Uruguay', '2026-06-15', 'Hard Rock Stadium', 'Miami'),
-        (17, 'Group Stage', 'I', 'France', 'Senegal', '2026-06-16', 'MetLife Stadium', 'New York/New Jersey'),
-        (18, 'Group Stage', 'I', 'Norway', 'TBD', '2026-06-16', 'Gillette Stadium', 'Boston'),
-        (19, 'Group Stage', 'J', 'Argentina', 'Algeria', '2026-06-16', 'Arrowhead Stadium', 'Kansas City'),
-        (20, 'Group Stage', 'K', 'Portugal', 'TBD', '2026-06-17', 'NRG Stadium', 'Houston'),
-        (21, 'Group Stage', 'K', 'Uzbekistan', 'Colombia', '2026-06-17', 'Estadio Azteca', 'Mexico City'),
-        (22, 'Group Stage', 'L', 'England', 'Croatia', '2026-06-17', "AT&T Stadium", 'Dallas'),
-        (23, 'Group Stage', 'L', 'Ghana', 'Panama', '2026-06-17', 'BMO Field', 'Toronto'),
-        (24, 'Group Stage', 'A', 'Czechia', 'South Africa', '2026-06-18', 'Mercedes-Benz Stadium', 'Atlanta'),
-        (25, 'Group Stage', 'A', 'Mexico', 'South Korea', '2026-06-18', 'Estadio Akron', 'Guadalajara'),
-        (26, 'Group Stage', 'B', 'Switzerland', 'TBD', '2026-06-18', 'SoFi Stadium', 'Los Angeles'),
-        (27, 'Group Stage', 'B', 'Canada', 'Qatar', '2026-06-18', 'BC Place', 'Vancouver'),
-        (28, 'Group Stage', 'C', 'Scotland', 'Morocco', '2026-06-19', 'Gillette Stadium', 'Boston'),
-        (29, 'Group Stage', 'C', 'Brazil', 'Haiti', '2026-06-19', 'Lincoln Financial Field', 'Philadelphia'),
-        (30, 'Group Stage', 'D', 'USA', 'Australia', '2026-06-19', 'Lumen Field', 'Seattle'),
-        (31, 'Group Stage', 'F', 'Tunisia', 'Japan', '2026-06-19', 'Estadio BBVA', 'Monterrey'),
-        (32, 'Group Stage', 'E', 'Germany', "Cote d'Ivoire", '2026-06-20', 'BMO Field', 'Toronto'),
-        (33, 'Group Stage', 'E', 'Ecuador', 'Curacao', '2026-06-20', 'Arrowhead Stadium', 'Kansas City'),
-        (34, 'Group Stage', 'F', 'Netherlands', 'TBD', '2026-06-20', 'NRG Stadium', 'Houston'),
-        (35, 'Group Stage', 'G', 'Belgium', 'Iran', '2026-06-21', 'SoFi Stadium', 'Los Angeles'),
-        (36, 'Group Stage', 'G', 'New Zealand', 'Egypt', '2026-06-21', 'BC Place', 'Vancouver'),
-        (37, 'Group Stage', 'H', 'Spain', 'Saudi Arabia', '2026-06-21', 'Mercedes-Benz Stadium', 'Atlanta'),
-        (38, 'Group Stage', 'H', 'Uruguay', 'Cape Verde', '2026-06-21', 'Hard Rock Stadium', 'Miami'),
-        (39, 'Group Stage', 'I', 'France', 'TBD', '2026-06-22', 'Lincoln Financial Field', 'Philadelphia'),
-        (40, 'Group Stage', 'I', 'Norway', 'Senegal', '2026-06-22', 'MetLife Stadium', 'New York/New Jersey'),
-        (41, 'Group Stage', 'J', 'Argentina', 'Austria', '2026-06-22', "AT&T Stadium", 'Dallas'),
-        (42, 'Group Stage', 'J', 'Jordan', 'Algeria', '2026-06-22', "Levi's Stadium", 'San Francisco'),
-        (43, 'Group Stage', 'K', 'Portugal', 'Uzbekistan', '2026-06-23', 'NRG Stadium', 'Houston'),
-        (44, 'Group Stage', 'K', 'Colombia', 'TBD', '2026-06-23', 'Estadio Akron', 'Guadalajara'),
-        (45, 'Group Stage', 'L', 'England', 'Ghana', '2026-06-23', 'Gillette Stadium', 'Boston'),
-        (46, 'Group Stage', 'L', 'Panama', 'Croatia', '2026-06-23', 'BMO Field', 'Toronto'),
-        (47, 'Group Stage', 'A', 'South Africa', 'South Korea', '2026-06-24', 'Estadio Akron', 'Guadalajara'),
-        (48, 'Group Stage', 'A', 'Czechia', 'Mexico', '2026-06-24', 'Estadio Azteca', 'Mexico City'),
-        (49, 'Group Stage', 'B', 'Switzerland', 'Canada', '2026-06-24', 'BC Place', 'Vancouver'),
-        (50, 'Group Stage', 'B', 'TBD', 'Qatar', '2026-06-24', 'SoFi Stadium', 'Los Angeles'),
-        (51, 'Group Stage', 'C', 'Morocco', 'Haiti', '2026-06-25', 'Gillette Stadium', 'Boston'),
-        (52, 'Group Stage', 'C', 'Scotland', 'Brazil', '2026-06-25', 'MetLife Stadium', 'New York/New Jersey'),
-        (53, 'Group Stage', 'D', 'Paraguay', 'Australia', '2026-06-25', 'Lumen Field', 'Seattle'),
-        (54, 'Group Stage', 'D', 'TBD', 'USA', '2026-06-25', "Levi's Stadium", 'San Francisco'),
-        (55, 'Group Stage', 'E', 'Curacao', "Cote d'Ivoire", '2026-06-25', 'NRG Stadium', 'Houston'),
-        (56, 'Group Stage', 'E', 'Ecuador', 'Germany', '2026-06-25', 'Lincoln Financial Field', 'Philadelphia'),
-        (57, 'Group Stage', 'F', 'Japan', 'TBD', '2026-06-26', 'Estadio BBVA', 'Monterrey'),
-        (58, 'Group Stage', 'F', 'TBD', 'Netherlands', '2026-06-26', "AT&T Stadium", 'Dallas'),
-        (59, 'Group Stage', 'G', 'Egypt', 'Iran', '2026-06-26', 'BC Place', 'Vancouver'),
-        (60, 'Group Stage', 'G', 'New Zealand', 'Belgium', '2026-06-26', 'Lumen Field', 'Seattle'),
-        (61, 'Group Stage', 'H', 'Cape Verde', 'Saudi Arabia', '2026-06-26', 'NRG Stadium', 'Houston'),
-        (62, 'Group Stage', 'H', 'Uruguay', 'Spain', '2026-06-26', 'Estadio Akron', 'Guadalajara'),
-        (63, 'Group Stage', 'I', 'Senegal', 'TBD', '2026-06-27', 'MetLife Stadium', 'New York/New Jersey'),
-        (64, 'Group Stage', 'I', 'TBD', 'France', '2026-06-27', 'Hard Rock Stadium', 'Miami'),
-        (65, 'Group Stage', 'J', 'Austria', 'Algeria', '2026-06-27', 'Arrowhead Stadium', 'Kansas City'),
-        (66, 'Group Stage', 'J', 'Jordan', 'Argentina', '2026-06-27', "AT&T Stadium", 'Dallas'),
-        (67, 'Group Stage', 'K', 'TBD', 'Uzbekistan', '2026-06-27', 'Estadio Azteca', 'Mexico City'),
-        (68, 'Group Stage', 'K', 'Colombia', 'Portugal', '2026-06-27', 'Hard Rock Stadium', 'Miami'),
-        (69, 'Group Stage', 'L', 'Croatia', 'Ghana', '2026-06-27', 'BMO Field', 'Toronto'),
-        (70, 'Group Stage', 'L', 'Panama', 'England', '2026-06-27', 'MetLife Stadium', 'New York/New Jersey'),
-        # Knockout Stage
-        (71, 'Round of 32', None, 'TBD', 'TBD', '2026-06-28', 'TBD', 'TBD'),
-        (72, 'Round of 32', None, 'TBD', 'TBD', '2026-06-29', 'TBD', 'TBD'),
-        (73, 'Round of 32', None, 'TBD', 'TBD', '2026-06-29', 'TBD', 'TBD'),
-        (74, 'Round of 32', None, 'TBD', 'TBD', '2026-06-29', 'TBD', 'TBD'),
-        (75, 'Round of 32', None, 'TBD', 'TBD', '2026-06-30', 'TBD', 'TBD'),
-        (76, 'Round of 32', None, 'TBD', 'TBD', '2026-06-30', 'TBD', 'TBD'),
-        (77, 'Round of 32', None, 'TBD', 'TBD', '2026-06-30', 'TBD', 'TBD'),
-        (78, 'Round of 32', None, 'TBD', 'TBD', '2026-07-01', 'TBD', 'TBD'),
-        (79, 'Round of 32', None, 'TBD', 'TBD', '2026-07-01', 'TBD', 'TBD'),
-        (80, 'Round of 32', None, 'TBD', 'TBD', '2026-07-01', 'TBD', 'TBD'),
-        (81, 'Round of 32', None, 'TBD', 'TBD', '2026-07-02', 'TBD', 'TBD'),
-        (82, 'Round of 32', None, 'TBD', 'TBD', '2026-07-02', 'TBD', 'TBD'),
-        (83, 'Round of 32', None, 'TBD', 'TBD', '2026-07-02', 'TBD', 'TBD'),
-        (84, 'Round of 32', None, 'TBD', 'TBD', '2026-07-03', 'TBD', 'TBD'),
-        (85, 'Round of 32', None, 'TBD', 'TBD', '2026-07-03', 'TBD', 'TBD'),
-        (86, 'Round of 32', None, 'TBD', 'TBD', '2026-07-03', 'TBD', 'TBD'),
-        (87, 'Round of 16', None, 'TBD', 'TBD', '2026-07-04', 'TBD', 'TBD'),
-        (88, 'Round of 16', None, 'TBD', 'TBD', '2026-07-04', 'TBD', 'TBD'),
-        (89, 'Round of 16', None, 'TBD', 'TBD', '2026-07-05', 'TBD', 'TBD'),
-        (90, 'Round of 16', None, 'TBD', 'TBD', '2026-07-05', 'TBD', 'TBD'),
-        (91, 'Round of 16', None, 'TBD', 'TBD', '2026-07-06', 'TBD', 'TBD'),
-        (92, 'Round of 16', None, 'TBD', 'TBD', '2026-07-06', 'TBD', 'TBD'),
-        (93, 'Round of 16', None, 'TBD', 'TBD', '2026-07-07', 'TBD', 'TBD'),
-        (94, 'Round of 16', None, 'TBD', 'TBD', '2026-07-07', 'TBD', 'TBD'),
-        (95, 'Quarter-final', None, 'TBD', 'TBD', '2026-07-09', 'TBD', 'TBD'),
-        (96, 'Quarter-final', None, 'TBD', 'TBD', '2026-07-10', 'TBD', 'TBD'),
-        (97, 'Quarter-final', None, 'TBD', 'TBD', '2026-07-11', 'TBD', 'TBD'),
-        (98, 'Quarter-final', None, 'TBD', 'TBD', '2026-07-11', 'TBD', 'TBD'),
-        (99, 'Semi-final', None, 'TBD', 'TBD', '2026-07-14', 'TBD', 'TBD'),
-        (100, 'Semi-final', None, 'TBD', 'TBD', '2026-07-15', 'TBD', 'TBD'),
-        (101, 'Third Place', None, 'TBD', 'TBD', '2026-07-18', 'TBD', 'TBD'),
-        (102, 'Final', None, 'TBD', 'TBD', '2026-07-19', 'MetLife Stadium', 'New York/New Jersey'),
+        # ---- Group Stage (72 matches) ----
+        (1,'Group Stage','A','Mexico','South Africa','2026-06-11','19:00','MetLife Stadium','East Rutherford, NJ'),
+        (2,'Group Stage','A','South Korea','Czech Republic','2026-06-12','02:00','SoFi Stadium','Los Angeles, CA'),
+        (3,'Group Stage','B','Canada','Bosnia-Herzegovina','2026-06-12','19:00',"AT&T Stadium",'Arlington, TX'),
+        (4,'Group Stage','D','United States','Paraguay','2026-06-13','01:00','Hard Rock Stadium','Miami Gardens, FL'),
+        (5,'Group Stage','B','Qatar','Switzerland','2026-06-13','19:00','Mercedes-Benz Stadium','Atlanta, GA'),
+        (6,'Group Stage','C','Brazil','Morocco','2026-06-13','22:00','NRG Stadium','Houston, TX'),
+        (7,'Group Stage','C','Haiti','Scotland','2026-06-14','01:00','Lincoln Financial Field','Philadelphia, PA'),
+        (8,'Group Stage','D','Australia','Turkey','2026-06-14','04:00','Lumen Field','Seattle, WA'),
+        (9,'Group Stage','E','Germany','Curaçao','2026-06-14','17:00',"Levi's Stadium",'Santa Clara, CA'),
+        (10,'Group Stage','F','Netherlands','Japan','2026-06-14','20:00','Arrowhead Stadium','Kansas City, MO'),
+        (11,'Group Stage','E','Ivory Coast','Ecuador','2026-06-14','23:00','Gillette Stadium','Foxborough, MA'),
+        (12,'Group Stage','F','Sweden','Tunisia','2026-06-15','02:00','Estadio Azteca','Mexico City'),
+        (13,'Group Stage','H','Spain','Cape Verde Islands','2026-06-15','16:00','Estadio Akron','Guadalajara'),
+        (14,'Group Stage','G','Belgium','Egypt','2026-06-15','19:00','Estadio BBVA','Monterrey'),
+        (15,'Group Stage','H','Saudi Arabia','Uruguay','2026-06-15','22:00','BMO Field','Toronto'),
+        (16,'Group Stage','G','Iran','New Zealand','2026-06-16','01:00','BC Place','Vancouver'),
+        (17,'Group Stage','I','France','Senegal','2026-06-16','19:00','MetLife Stadium','East Rutherford, NJ'),
+        (18,'Group Stage','I','Iraq','Norway','2026-06-16','22:00','SoFi Stadium','Los Angeles, CA'),
+        (19,'Group Stage','J','Argentina','Algeria','2026-06-17','01:00',"AT&T Stadium",'Arlington, TX'),
+        (20,'Group Stage','J','Austria','Jordan','2026-06-17','04:00','Hard Rock Stadium','Miami Gardens, FL'),
+        (21,'Group Stage','K','Portugal','Congo DR','2026-06-17','17:00','Mercedes-Benz Stadium','Atlanta, GA'),
+        (22,'Group Stage','L','England','Croatia','2026-06-17','20:00','NRG Stadium','Houston, TX'),
+        (23,'Group Stage','L','Ghana','Panama','2026-06-17','23:00','Lincoln Financial Field','Philadelphia, PA'),
+        (24,'Group Stage','K','Uzbekistan','Colombia','2026-06-18','02:00','Lumen Field','Seattle, WA'),
+        (25,'Group Stage','A','Czech Republic','South Africa','2026-06-18','16:00',"Levi's Stadium",'Santa Clara, CA'),
+        (26,'Group Stage','B','Switzerland','Bosnia-Herzegovina','2026-06-18','19:00','Arrowhead Stadium','Kansas City, MO'),
+        (27,'Group Stage','B','Canada','Qatar','2026-06-18','22:00','Gillette Stadium','Foxborough, MA'),
+        (28,'Group Stage','A','Mexico','South Korea','2026-06-19','01:00','Estadio Azteca','Mexico City'),
+        (29,'Group Stage','D','United States','Australia','2026-06-19','19:00','Estadio Akron','Guadalajara'),
+        (30,'Group Stage','C','Scotland','Morocco','2026-06-19','22:00','Estadio BBVA','Monterrey'),
+        (31,'Group Stage','C','Brazil','Haiti','2026-06-20','00:30','BMO Field','Toronto'),
+        (32,'Group Stage','D','Turkey','Paraguay','2026-06-20','03:00','BC Place','Vancouver'),
+        (33,'Group Stage','F','Netherlands','Sweden','2026-06-20','17:00','MetLife Stadium','East Rutherford, NJ'),
+        (34,'Group Stage','E','Germany','Ivory Coast','2026-06-20','20:00','SoFi Stadium','Los Angeles, CA'),
+        (35,'Group Stage','E','Ecuador','Curaçao','2026-06-21','00:00',"AT&T Stadium",'Arlington, TX'),
+        (36,'Group Stage','F','Tunisia','Japan','2026-06-21','04:00','Hard Rock Stadium','Miami Gardens, FL'),
+        (37,'Group Stage','H','Spain','Saudi Arabia','2026-06-21','16:00','Mercedes-Benz Stadium','Atlanta, GA'),
+        (38,'Group Stage','G','Belgium','Iran','2026-06-21','19:00','NRG Stadium','Houston, TX'),
+        (39,'Group Stage','H','Uruguay','Cape Verde Islands','2026-06-21','22:00','Lincoln Financial Field','Philadelphia, PA'),
+        (40,'Group Stage','G','New Zealand','Egypt','2026-06-22','01:00','Lumen Field','Seattle, WA'),
+        (41,'Group Stage','J','Argentina','Austria','2026-06-22','17:00',"Levi's Stadium",'Santa Clara, CA'),
+        (42,'Group Stage','I','France','Iraq','2026-06-22','21:00','Arrowhead Stadium','Kansas City, MO'),
+        (43,'Group Stage','I','Norway','Senegal','2026-06-23','00:00','Gillette Stadium','Foxborough, MA'),
+        (44,'Group Stage','J','Jordan','Algeria','2026-06-23','03:00','Estadio Azteca','Mexico City'),
+        (45,'Group Stage','K','Portugal','Uzbekistan','2026-06-23','17:00','Estadio Akron','Guadalajara'),
+        (46,'Group Stage','L','England','Ghana','2026-06-23','20:00','Estadio BBVA','Monterrey'),
+        (47,'Group Stage','L','Panama','Croatia','2026-06-23','23:00','BMO Field','Toronto'),
+        (48,'Group Stage','K','Colombia','Congo DR','2026-06-24','02:00','BC Place','Vancouver'),
+        (49,'Group Stage','B','Switzerland','Canada','2026-06-24','19:00','MetLife Stadium','East Rutherford, NJ'),
+        (50,'Group Stage','B','Bosnia-Herzegovina','Qatar','2026-06-24','19:00','SoFi Stadium','Los Angeles, CA'),
+        (51,'Group Stage','C','Morocco','Haiti','2026-06-24','22:00',"AT&T Stadium",'Arlington, TX'),
+        (52,'Group Stage','C','Scotland','Brazil','2026-06-24','22:00','Hard Rock Stadium','Miami Gardens, FL'),
+        (53,'Group Stage','A','Czech Republic','Mexico','2026-06-25','01:00','Mercedes-Benz Stadium','Atlanta, GA'),
+        (54,'Group Stage','A','South Africa','South Korea','2026-06-25','01:00','NRG Stadium','Houston, TX'),
+        (55,'Group Stage','E','Ecuador','Germany','2026-06-25','20:00','Lincoln Financial Field','Philadelphia, PA'),
+        (56,'Group Stage','E','Curaçao','Ivory Coast','2026-06-25','20:00','Lumen Field','Seattle, WA'),
+        (57,'Group Stage','F','Tunisia','Netherlands','2026-06-25','23:00',"Levi's Stadium",'Santa Clara, CA'),
+        (58,'Group Stage','F','Japan','Sweden','2026-06-25','23:00','Arrowhead Stadium','Kansas City, MO'),
+        (59,'Group Stage','D','Turkey','United States','2026-06-26','02:00','Gillette Stadium','Foxborough, MA'),
+        (60,'Group Stage','D','Paraguay','Australia','2026-06-26','02:00','Estadio Azteca','Mexico City'),
+        (61,'Group Stage','I','Norway','France','2026-06-26','19:00','Estadio Akron','Guadalajara'),
+        (62,'Group Stage','I','Senegal','Iraq','2026-06-26','19:00','Estadio BBVA','Monterrey'),
+        (63,'Group Stage','H','Uruguay','Spain','2026-06-27','00:00','BMO Field','Toronto'),
+        (64,'Group Stage','H','Cape Verde Islands','Saudi Arabia','2026-06-27','00:00','BC Place','Vancouver'),
+        (65,'Group Stage','G','New Zealand','Belgium','2026-06-27','03:00','MetLife Stadium','East Rutherford, NJ'),
+        (66,'Group Stage','G','Egypt','Iran','2026-06-27','03:00','SoFi Stadium','Los Angeles, CA'),
+        (67,'Group Stage','L','Panama','England','2026-06-27','21:00',"AT&T Stadium",'Arlington, TX'),
+        (68,'Group Stage','L','Croatia','Ghana','2026-06-27','21:00','Hard Rock Stadium','Miami Gardens, FL'),
+        (69,'Group Stage','K','Colombia','Portugal','2026-06-27','23:30','Mercedes-Benz Stadium','Atlanta, GA'),
+        (70,'Group Stage','K','Congo DR','Uzbekistan','2026-06-27','23:30','NRG Stadium','Houston, TX'),
+        (71,'Group Stage','J','Jordan','Argentina','2026-06-28','02:00','Lincoln Financial Field','Philadelphia, PA'),
+        (72,'Group Stage','J','Algeria','Austria','2026-06-28','02:00','Lumen Field','Seattle, WA'),
+        # ---- Round of 32 (16 matches) ----
+        (73,'Round of 32',None,'TBD','TBD','2026-06-28','19:00',"Levi's Stadium",'Santa Clara, CA'),
+        (74,'Round of 32',None,'TBD','TBD','2026-06-29','17:00','Arrowhead Stadium','Kansas City, MO'),
+        (75,'Round of 32',None,'TBD','TBD','2026-06-29','20:30','Gillette Stadium','Foxborough, MA'),
+        (76,'Round of 32',None,'TBD','TBD','2026-06-30','01:00','Estadio Azteca','Mexico City'),
+        (77,'Round of 32',None,'TBD','TBD','2026-06-30','17:00','Estadio Akron','Guadalajara'),
+        (78,'Round of 32',None,'TBD','TBD','2026-06-30','21:00','Estadio BBVA','Monterrey'),
+        (79,'Round of 32',None,'TBD','TBD','2026-07-01','01:00','BMO Field','Toronto'),
+        (80,'Round of 32',None,'TBD','TBD','2026-07-01','16:00','BC Place','Vancouver'),
+        (81,'Round of 32',None,'TBD','TBD','2026-07-01','20:00','MetLife Stadium','East Rutherford, NJ'),
+        (82,'Round of 32',None,'TBD','TBD','2026-07-02','00:00','SoFi Stadium','Los Angeles, CA'),
+        (83,'Round of 32',None,'TBD','TBD','2026-07-02','19:00',"AT&T Stadium",'Arlington, TX'),
+        (84,'Round of 32',None,'TBD','TBD','2026-07-02','23:00','Hard Rock Stadium','Miami Gardens, FL'),
+        (85,'Round of 32',None,'TBD','TBD','2026-07-03','03:00','Mercedes-Benz Stadium','Atlanta, GA'),
+        (86,'Round of 32',None,'TBD','TBD','2026-07-03','18:00','NRG Stadium','Houston, TX'),
+        (87,'Round of 32',None,'TBD','TBD','2026-07-03','22:00','Lincoln Financial Field','Philadelphia, PA'),
+        (88,'Round of 32',None,'TBD','TBD','2026-07-04','01:30','Lumen Field','Seattle, WA'),
+        # ---- Round of 16 (8 matches) ----
+        (89,'Round of 16',None,'TBD','TBD','2026-07-04','17:00',"Levi's Stadium",'Santa Clara, CA'),
+        (90,'Round of 16',None,'TBD','TBD','2026-07-04','21:00','Arrowhead Stadium','Kansas City, MO'),
+        (91,'Round of 16',None,'TBD','TBD','2026-07-05','20:00','Gillette Stadium','Foxborough, MA'),
+        (92,'Round of 16',None,'TBD','TBD','2026-07-06','00:00','Estadio Azteca','Mexico City'),
+        (93,'Round of 16',None,'TBD','TBD','2026-07-06','19:00','Estadio Akron','Guadalajara'),
+        (94,'Round of 16',None,'TBD','TBD','2026-07-07','00:00','Estadio BBVA','Monterrey'),
+        (95,'Round of 16',None,'TBD','TBD','2026-07-07','16:00','BMO Field','Toronto'),
+        (96,'Round of 16',None,'TBD','TBD','2026-07-07','20:00','BC Place','Vancouver'),
+        # ---- Quarter-finals (4 matches) ----
+        (97,'Quarter-final',None,'TBD','TBD','2026-07-09','20:00','MetLife Stadium','East Rutherford, NJ'),
+        (98,'Quarter-final',None,'TBD','TBD','2026-07-10','19:00','SoFi Stadium','Los Angeles, CA'),
+        (99,'Quarter-final',None,'TBD','TBD','2026-07-11','21:00',"AT&T Stadium",'Arlington, TX'),
+        (100,'Quarter-final',None,'TBD','TBD','2026-07-12','01:00','Hard Rock Stadium','Miami Gardens, FL'),
+        # ---- Semi-finals (2 matches) ----
+        (101,'Semi-final',None,'TBD','TBD','2026-07-14','19:00','Mercedes-Benz Stadium','Atlanta, GA'),
+        (102,'Semi-final',None,'TBD','TBD','2026-07-15','19:00','NRG Stadium','Houston, TX'),
+        # ---- Third Place ----
+        (103,'Third Place',None,'TBD','TBD','2026-07-18','21:00','Lincoln Financial Field','Philadelphia, PA'),
+        # ---- Final ----
+        (104,'Final',None,'TBD','TBD','2026-07-19','19:00','Lumen Field','Seattle, WA'),
     ]
     for f in fixtures:
         query(
-            'INSERT INTO fixtures (match_number, round, group_name, home_team, away_team, date, venue, city) '
-            f'VALUES ({p()}, {p()}, {p()}, {p()}, {p()}, {p()}, {p()}, {p()})',
+            'INSERT INTO fixtures (match_number, round, group_name, home_team, away_team, date, match_time, venue, city) '
+            f'VALUES ({p()}, {p()}, {p()}, {p()}, {p()}, {p()}, {p()}, {p()}, {p()})',
             f
         )
 
@@ -702,6 +722,73 @@ def fixtures():
         logging.error(f"fixtures error: {e}")
         raise
     return render_template('fixtures.html', fixtures=grouped, rounds=ROUNDS_FIXTURES)
+
+
+def sync_fixtures_from_api():
+    """Fetch live scores from worldcup26.ir and update the fixtures table."""
+    url = 'https://worldcup26.ir/get/games'
+    try:
+        resp = urllib.request.urlopen(url, timeout=10)
+        data = json.loads(resp.read().decode())
+    except Exception as e:
+        logging.error(f"sync_fixtures: failed to fetch {url}: {e}")
+        return False
+
+    db = get_db()
+    updated = 0
+    for game in data.get('games', []):
+        match_id = game.get('id')
+        if not match_id:
+            continue
+        try:
+            match_num = int(match_id)
+        except (ValueError, TypeError):
+            continue
+
+        home_score = game.get('home_score')
+        away_score = game.get('away_score')
+        finished = game.get('finished', 'FALSE')
+        time_elapsed = game.get('time_elapsed', 'notstarted')
+
+        if finished == 'TRUE' or time_elapsed == 'finished':
+            status = 'completed'
+        elif time_elapsed and time_elapsed not in ('notstarted', ''):
+            status = 'live'
+        else:
+            status = 'upcoming'
+
+        try:
+            hs = int(home_score) if home_score is not None else None
+            a_s = int(away_score) if away_score is not None else None
+        except (ValueError, TypeError):
+            hs = None
+            a_s = None
+
+        query(
+            f'UPDATE fixtures SET home_score = {p()}, away_score = {p()}, status = {p()} WHERE match_number = {p()}',
+            (hs, a_s, status, match_num)
+        )
+        updated += 1
+
+    db.commit()
+    logging.info(f"sync_fixtures: {updated} matches updated")
+    return True
+
+
+@app.route('/admin/sync-fixtures', methods=['POST'])
+@login_required
+def admin_sync_fixtures():
+    """Admin endpoint to sync fixture results from worldcup26.ir."""
+    try:
+        ok = sync_fixtures_from_api()
+        if ok:
+            flash('Fixtures synced successfully!', 'success')
+        else:
+            flash('Failed to sync fixtures (API unreachable).', 'danger')
+    except Exception as e:
+        logging.error(f"admin_sync_fixtures error: {e}")
+        flash(f'Sync error: {e}', 'danger')
+    return redirect(url_for('fixtures'))
 
 
 @app.route('/leaderboard')
