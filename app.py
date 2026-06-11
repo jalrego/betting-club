@@ -634,6 +634,7 @@ def new_bet():
     if bet_type == 'multi':
         matches = request.form.getlist('multi_match[]')
         picks = request.form.getlist('multi_pick[]')
+        match_numbers = request.form.getlist('multi_match_number[]')
         if not matches or not picks or not round_ or not stake_str or not odds_str:
             flash('All bet fields are required.', 'danger')
             return redirect(url_for('dashboard'))
@@ -644,6 +645,7 @@ def new_bet():
         match_info = ' / '.join(s['match'] for s in selections)
         pick = ' / '.join(s['pick'] for s in selections)
         selections_json = json.dumps(selections)
+        match_number = int(match_numbers[0]) if match_numbers and match_numbers[0] else None
     else:
         match_info = request.form.get('match_info', '').strip()
         pick = request.form.get('pick', '').strip()
@@ -652,6 +654,7 @@ def new_bet():
             return redirect(url_for('dashboard'))
         selections_json = None
         bet_type = 'single'
+        match_number = request.form.get('match_number', type=int)
 
     try:
         stake_raw = float(stake_str)
