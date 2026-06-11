@@ -108,19 +108,27 @@
     <input type="hidden" name="bet_type" id="betTypeInput" value="single">
 
     <div id="singleFields">
-      <div class="form-grid">
-        <div>
-          <label for="match_info">Match</label>
-          <select name="match_number" id="match_number" required class="input">
+      <div style="display:flex;gap:0.5rem;align-items:end;margin-bottom:0.75rem;">
+        <div style="flex:1;position:relative;">
+          <label for="matchSearch">Match</label>
+          <input type="text" id="matchSearch" class="input" placeholder="Search team or date..." autocomplete="off" oninput="filterMatches()" onfocus="filterMatches()" onblur="setTimeout(function(){document.getElementById('matchDropdown').style.display='none'},200)">
+          <select name="match_number" id="match_number" required style="display:none;">
             <option value="">Select match</option>
             {% for f in fixtures %}
-            <option value="{{ f.match_number }}" data-round="{{ f.round }}" data-home="{{ f.home_team }}" data-away="{{ f.away_team }}">
-              {{ f.home_team }} vs {{ f.away_team }} ({{ f.round }})
+            <option value="{{ f.match_number }}" data-round="{{ f.round }}" data-home="{{ f.home_team }}" data-away="{{ f.away_team }}" data-date="{{ f.date }}">
+              {{ f.home_team }} vs {{ f.away_team }}
             </option>
             {% endfor %}
           </select>
           <input type="hidden" name="match_info" id="match_info">
+          <div id="matchDropdown" style="display:none;position:absolute;z-index:100;background:#13161e;border:1px solid #262a36;border-radius:6px;max-height:220px;overflow-y:auto;width:100%;left:0;top:100%;margin-top:2px;"></div>
         </div>
+        <div style="width:140px;flex-shrink:0;">
+          <label for="dateFilter">Filter Date</label>
+          <input type="date" id="dateFilter" class="input" oninput="filterMatches()">
+        </div>
+      </div>
+      <div class="form-grid">
         <div>
           <label for="round">Round</label>
           <select name="round" id="round" required class="input">
@@ -308,23 +316,56 @@ function toggleBetType() {
   multis.forEach(function(el) { el.required = isMulti; });
 }
 
-// populate match_info hidden field from dropdown
-document.addEventListener('DOMContentLoaded', function() {
+// populate match_info hidden field from dropdown + search + date filter
+function filterMatches() {
+  var q = (document.getElementById('matchSearch').value || '').toLowerCase();
+  var dateFilter = document.getElementById('dateFilter').value;
   var sel = document.getElementById('match_number');
-  if (sel) {
-    sel.addEventListener('change', function() {
-      var opt = sel.options[sel.selectedIndex];
-      var info = document.getElementById('match_info');
-      if (opt.value) {
-        info.value = opt.getAttribute('data-home') + ' vs ' + opt.getAttribute('data-away');
-        // auto-set round
-        var roundSel = document.getElementById('round');
-        if (roundSel) roundSel.value = opt.getAttribute('data-round');
-      } else {
-        info.value = '';
-      }
-    });
+  var dd = document.getElementById('matchDropdown');
+  dd.innerHTML = '';
+  var found = 0;
+  for (var i = 0; i < sel.options.length; i++) {
+    var opt = sel.options[i];
+    if (!opt.value) continue;
+    var home = opt.getAttribute('data-home') || '';
+    var away = opt.getAttribute('data-away') || '';
+    var round = opt.getAttribute('data-round') || '';
+    var date = opt.getAttribute('data-date') || '';
+    var text = home + ' vs ' + away + ' (' + round + ', ' + date.slice(-5) + ')';
+    var match = (!q || text.toLowerCase().indexOf(q) !== -1);
+    if (match && dateFilter && date !== dateFilter) match = false;
+    if (match) {
+      found++;
+      var div = document.createElement('div');
+      div.textContent = text;
+      div.style.cssText = 'padding:0.5rem 0.75rem;cursor:pointer;font-size:0.85rem;border-bottom:1px solid #1a1e2a;';
+      div.onmouseover = function(){this.style.background='#1a1e2a';};
+      div.onmouseout = function(){this.style.background='';};
+      div.onclick = (function(opt, text) {
+        return function() {
+          document.getElementById('matchSearch').value = text;
+          document.getElementById('match_number').value = opt.value;
+          document.getElementById('match_info').value = home + ' vs ' + away;
+          var roundSel = document.getElementById('round');
+          if (roundSel) roundSel.value = opt.getAttribute('data-round');
+          dd.style.display = 'none';
+        };
+      })(opt, text);
+      dd.appendChild(div);
+    }
   }
+  dd.style.display = found && q.length > 0 ? 'block' : 'none';
+  if (!found && q.length > 0) {
+    dd.innerHTML = '<div style="padding:0.5rem 0.75rem;color:#535768;font-size:0.85rem;">No matches found</div>';
+    dd.style.display = 'block';
+  }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  // clear search on form submit so hidden value goes through
+  document.getElementById('betForm').addEventListener('submit', function() {
+    document.getElementById('matchSearch').disabled = true;
+  });
 });
 
 function addLeg() {
