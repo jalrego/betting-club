@@ -767,6 +767,8 @@ def user_profile(user_id):
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 8080))
+    with app.app_context():
+        init_db()
     app.run(debug=True, host='0.0.0.0', port=port)
 else:
     with app.app_context():
