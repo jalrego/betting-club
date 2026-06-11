@@ -44,11 +44,9 @@ def team_flag(team_name):
     code = COUNTRY_CODES.get(team_name)
     if not code or code == 'TBD':
         return ''
-    # Regional indicators for GB-ENG / GB-SCT
-    if code == 'GB-ENG':
-        return '\U0001F3F4\U000E0067\U000E0062\U000E0065\U000E006E\U000E0067\U000E007F'
-    if code == 'GB-SCT':
-        return '\U0001F3F4\U000E0067\U000E0062\U000E0073\U000E0063\U000E0074\U000E007F'
+    # Use GB flag for England and Scotland (tag sequences don't render on Windows)
+    if code in ('GB-ENG', 'GB-SCT'):
+        code = 'GB'
     return ''.join(chr(0x1F1E6 + ord(c) - ord('A')) for c in code.upper())
 
 
