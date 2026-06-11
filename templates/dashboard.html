@@ -117,7 +117,7 @@
     </label>
   </div>
 
-  <form method="POST" action="{{ url_for('new_bet') }}" id="betForm">
+  <form method="POST" action="{{ url_for('new_bet') }}" id="betForm" data-balance="{{ balance }}">
     <input type="hidden" name="bet_type" id="betTypeInput" value="single">
 
     <div id="singleFields">
@@ -186,6 +186,7 @@
           <input type="range" min="0.5" max="50" step="0.5" value="5" id="stakeSliderMulti" oninput="stakeSyncMulti(this.value)" style="flex:1;">
           <input type="number" step="0.01" min="0.01" name="stake" id="stake_multi" required placeholder="e.g. 5.00" value="5.00" style="width:75px;" oninput="sliderSyncMulti(this.value)">
         </div>
+        <div id="balanceWarningMulti" style="display:none;color:#ef4444;font-size:0.85rem;">Stake exceeds your available balance</div>
       </div>
       <div style="display:flex;gap:0.5rem;">
         <div style="flex:1;">
@@ -195,6 +196,7 @@
       </div>
     </div>
 
+    <div id="balanceWarning" style="display:none;color:#ef4444;font-size:0.85rem;margin-top:0.5rem;">Stake exceeds your available balance</div>
     <button type="submit" class="btn btn-primary" style="margin-top: 0.75rem;">Place Bet</button>
   </form>
 </div>
@@ -366,9 +368,15 @@ function filterMatches() {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+  var bal = getBalance();
+  var max = Math.min(bal, 50);
+  document.getElementById('stakeSlider').max = max;
+  document.getElementById('stakeSliderMulti').max = max;
   document.getElementById('betForm').addEventListener('submit', function() {
     document.getElementById('matchSearch').disabled = true;
   });
+  stakeSync(document.getElementById('stakeSlider').value);
+  stakeSyncMulti(document.getElementById('stakeSliderMulti').value);
 });
 
 function addMultiLeg() {
@@ -434,27 +442,47 @@ function removeLeg(btn) {
   }
 }
 
+function getBalance() {
+  return parseFloat(document.getElementById('betForm').getAttribute('data-balance'));
+}
+function validateStake(stake, warningId, submitBtn) {
+  var bal = getBalance();
+  var warn = document.getElementById(warningId);
+  if (stake > bal) {
+    warn.style.display = 'block';
+    if (submitBtn) submitBtn.disabled = true;
+  } else {
+    warn.style.display = 'none';
+    if (submitBtn) submitBtn.disabled = false;
+  }
+}
 function stakeSync(val) {
   document.getElementById('stake').value = parseFloat(val).toFixed(2);
   document.getElementById('stakeDisplay').textContent = parseFloat(val).toFixed(2);
+  validateStake(parseFloat(val), 'balanceWarning', document.querySelector('#betForm .btn-primary'));
 }
 function sliderSync(val) {
   var v = parseFloat(val);
-  if (v < 0.5) v = 0.5;
-  if (v > 50) v = 50;
+  if (isNaN(v) || v < 0.5) v = 0.5;
+  var bal = getBalance();
+  if (v > bal) { document.getElementById('stake').value = v.toFixed(2); document.getElementById('stakeDisplay').textContent = v.toFixed(2); validateStake(v, 'balanceWarning', document.querySelector('#betForm .btn-primary')); return; }
   document.getElementById('stakeSlider').value = v;
   document.getElementById('stakeDisplay').textContent = v.toFixed(2);
+  validateStake(v, 'balanceWarning', document.querySelector('#betForm .btn-primary'));
 }
 function stakeSyncMulti(val) {
   document.getElementById('stake_multi').value = parseFloat(val).toFixed(2);
   document.getElementById('stakeDisplayMulti').textContent = parseFloat(val).toFixed(2);
+  validateStake(parseFloat(val), 'balanceWarningMulti', document.querySelector('#betForm .btn-primary'));
 }
 function sliderSyncMulti(val) {
   var v = parseFloat(val);
-  if (v < 0.5) v = 0.5;
-  if (v > 50) v = 50;
+  if (isNaN(v) || v < 0.5) v = 0.5;
+  var bal = getBalance();
+  if (v > bal) { document.getElementById('stake_multi').value = v.toFixed(2); document.getElementById('stakeDisplayMulti').textContent = v.toFixed(2); validateStake(v, 'balanceWarningMulti', document.querySelector('#betForm .btn-primary')); return; }
   document.getElementById('stakeSliderMulti').value = v;
   document.getElementById('stakeDisplayMulti').textContent = v.toFixed(2);
+  validateStake(v, 'balanceWarningMulti', document.querySelector('#betForm .btn-primary'));
 }
 </script>
 
