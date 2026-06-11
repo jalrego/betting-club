@@ -494,10 +494,17 @@ def user_bet_stats(user_id):
         stats[result] = r['cnt']
         stats['total'] += r['cnt']
         stats['staked'] += r['total'] if r['total'] else 0
+    # pending stake (unsettled bets)
+    pending_row = query(
+        f'SELECT COALESCE(SUM(stake), 0) as pending_total FROM bets WHERE user_id = {p()} AND result = \'pending\'',
+        (user_id,)
+    ).fetchone()
+    stats['pending_stake'] = pending_row['pending_total'] if pending_row else 0
     # calculate win rate
     settled = stats['won'] + stats['lost']
     stats['win_rate'] = round(stats['won'] / settled * 100) if settled > 0 else 0
     stats['staked'] = stats['staked'] / 100.0
+    stats['pending_stake'] = stats['pending_stake'] / 100.0
     return stats
 
 
@@ -1179,6 +1186,7 @@ def leaderboard():
                 'win_rate': stats['win_rate'],
                 'staked': stats['staked'],
                 'form': form,
+                'pending_stake': stats['pending_stake'],
             })
 
         players.sort(key=lambda p: p['latest_balance'], reverse=True)

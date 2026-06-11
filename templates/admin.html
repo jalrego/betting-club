@@ -12,6 +12,7 @@
         <th style="padding-left: 1rem;">#</th>
         <th>Player</th>
         <th>Balance</th>
+        <th>In Play</th>
         <th>P&amp;L</th>
         <th>Bets</th>
         <th>Win Rate</th>
@@ -52,12 +53,19 @@
           {% endif %}
         </td>
         <td>
+          {% if player.pending_stake > 0 %}
+            &euro;{{ "%.2f"|format(player.pending_stake) }}
+          {% else %}
+            <span class="text-muted">&mdash;</span>
+          {% endif %}
+        </td>
+        <td>
           {% if player.latest_balance is not none %}
-            {% set diff = player.latest_balance - starting %}
-            {% if diff > 0 %}
-              <span class="green">+&euro;{{ "%.2f"|format(diff) }}</span>
-            {% elif diff < 0 %}
-              <span class="red">&minus;&euro;{{ "%.2f"|format(-diff) }}</span>
+            {% set realized = player.latest_balance + player.pending_stake - starting %}
+            {% if realized > 0 %}
+              <span class="green">+&euro;{{ "%.2f"|format(realized) }}</span>
+            {% elif realized < 0 %}
+              <span class="red">&minus;&euro;{{ "%.2f"|format(realized) }}</span>
             {% else %}
               <span class="text-muted">&euro;0.00</span>
             {% endif %}

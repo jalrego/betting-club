@@ -8,29 +8,26 @@
 
 <div class="stat-grid" style="grid-template-columns:1fr 1fr 1fr;margin-bottom:0.5rem;">
   <div class="card stat-box" style="padding:0.6rem 0.5rem;border-top-color:#22c55e;">
-    <div class="label">Balance</div>
+    <div class="label">Available Balance</div>
     <div class="value" style="font-size:1.2rem;">&euro;{{ "%.2f"|format(balance) }}</div>
   </div>
   <div class="card stat-box" style="padding:0.6rem 0.5rem;border-top-color:#fbbf24;">
-    <div class="label">Profit / Loss</div>
-    {% set pl = balance - starting %}
-    {% if pl > 0 %}
-      <div class="value green" style="font-size:1.2rem;">+&euro;{{ "%.2f"|format(pl) }}</div>
-    {% elif pl < 0 %}
-      <div class="value red" style="font-size:1.2rem;">&euro;{{ "%.2f"|format(pl) }}</div>
+    <div class="label">In Play</div>
+    {% if stats.pending_stake > 0 %}
+      <div class="value" style="font-size:1.2rem;">&euro;{{ "%.2f"|format(stats.pending_stake) }}</div>
     {% else %}
       <div class="value" style="font-size:1.2rem;">&euro;0.00</div>
     {% endif %}
   </div>
   <div class="card stat-box" style="padding:0.6rem 0.5rem;border-top-color:#6366f1;">
-    <div class="label">Return</div>
-    {% set pl = balance - starting %}
-    {% if pl > 0 %}
-      <div class="value green" style="font-size:1.2rem;">+{{ "%.1f"|format(pl / starting * 100) }}%</div>
-    {% elif pl < 0 %}
-      <div class="value red" style="font-size:1.2rem;">{{ "%.1f"|format(pl / starting * 100) }}%</div>
+    <div class="label">Realized P&amp;L</div>
+    {% set realized = balance + stats.pending_stake - starting %}
+    {% if realized > 0 %}
+      <div class="value green" style="font-size:1.2rem;">+&euro;{{ "%.2f"|format(realized) }}</div>
+    {% elif realized < 0 %}
+      <div class="value red" style="font-size:1.2rem;">&euro;{{ "%.2f"|format(realized) }}</div>
     {% else %}
-      <div class="value" style="font-size:1.2rem;">0.0%</div>
+      <div class="value" style="font-size:1.2rem;">&euro;0.00</div>
     {% endif %}
   </div>
 </div>
