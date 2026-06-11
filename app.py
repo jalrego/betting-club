@@ -277,13 +277,6 @@ def init_db():
         except Exception:
             db.rollback()
 
-        # Clean up / fix production data
-        try:
-            cleanup_prod_data()
-            db.commit()
-        except Exception:
-            db.rollback()
-
         # migration: add match_time column if missing
         try:
             if is_pg():
@@ -507,7 +500,7 @@ def seed_test_users():
         ('player3', 'test'),
     ]
     for username, pw in rows:
-        pw_hash = generate_password_hash(pw)
+        pw_hash = generate_password_hash(pw, method='pbkdf2:sha256')
         existing = query(f'SELECT id FROM users WHERE username = {p()}', (username,)).fetchone()
         if existing:
             query(f'UPDATE users SET password_hash = {p()} WHERE username = {p()}', (pw_hash, username))
@@ -516,41 +509,6 @@ def seed_test_users():
                 query("INSERT INTO users (username, password_hash) VALUES (%s, %s)", (username, pw_hash))
             else:
                 query("INSERT INTO users (username, password_hash) VALUES (?, ?)", (username, pw_hash))
-
-
-def cleanup_prod_data():
-    """Fix old-format bets (x → vs, missing match_number) and remove test accounts."""
-    db = get_db()
-    # Fix joaopjoaquim's bet: update match_info format and assign match_number
-    user = query(f'SELECT id FROM users WHERE username = {p()}', ('joaopjoaquim',)).fetchone()
-    if user:
-        uid = user['id']
-        # Delete old-format bets
-        query(f'DELETE FROM bets WHERE user_id = {p()}', (uid,))
-        query(f'DELETE FROM balance_records WHERE user_id = {p()}', (uid,))
-        # Place a new properly-formatted bet on Mexico vs South Africa (match 1)
-        import datetime
-        now_str = datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
-        query(
-            f'INSERT INTO bets (user_id, match_info, round, stake, odds, pick, bet_type, match_number, result, created_at) '
-            f'VALUES ({p()}, {p()}, {p()}, {p()}, {p()}, {p()}, {p()}, {p()}, {p()}, {p()})',
-            (uid, 'Mexico vs South Africa', 'Group Stage', 200, 2.18, 'Both Teams Score', 'single', 1, 'pending', now_str)
-        )
-        # Insert a balance record at starting balance
-        query(
-            f'INSERT INTO balance_records (user_id, balance, notes, created_at) VALUES ({p()}, {p()}, {p()}, {p()})',
-            (uid, 1000, 'initial', now_str)
-        )
-    # Delete test accounts and their bets/balance_records
-    test_users = ['testchecker', 'testfresh', 'player1', 'player2', 'player3']
-    for username in test_users:
-        u = query(f'SELECT id FROM users WHERE username = {p()}', (username,)).fetchone()
-        if u:
-            uid = u['id']
-            query(f'DELETE FROM balance_records WHERE user_id = {p()}', (uid,))
-            query(f'DELETE FROM bets WHERE user_id = {p()}', (uid,))
-            query(f'DELETE FROM users WHERE id = {p()}', (uid,))
-    logging.info('cleanup_prod_data: fixed joaopjoaquim bet, removed test accounts')
 
 
 def user_bet_stats(user_id):
@@ -664,7 +622,7 @@ def register():
             flash('Username already taken.', 'danger')
             return render_template('register.html')
 
-        pw_hash = generate_password_hash(password)
+        pw_hash = generate_password_hash(password, method='pbkdf2:sha256')
         query(
             f'INSERT INTO users (username, password_hash) VALUES ({p()}, {p()})',
             (username, pw_hash)
