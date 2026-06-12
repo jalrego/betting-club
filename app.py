@@ -259,16 +259,12 @@ def init_db():
             db.rollback()
 
         # Seed/refresh fixtures every startup (ensures latest data)
+        seed_fixtures()
         try:
-            if is_pg():
-                query('TRUNCATE TABLE fixtures')
-            else:
-                query('DELETE FROM fixtures')
-            if not sync_fixtures_from_api():
-                seed_fixtures()
-            db.commit()
+            sync_fixtures_from_api()
         except Exception:
-            db.rollback()
+            pass
+        db.commit()
 
         # migration: add match_time column if missing
         try:
