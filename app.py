@@ -288,6 +288,20 @@ def init_db():
             db.commit()
         except Exception:
             db.rollback()
+
+        # migration: add home_scorers, away_scorers, time_elapsed to fixtures
+        try:
+            if is_pg():
+                query("ALTER TABLE fixtures ADD COLUMN IF NOT EXISTS home_scorers TEXT")
+                query("ALTER TABLE fixtures ADD COLUMN IF NOT EXISTS away_scorers TEXT")
+                query("ALTER TABLE fixtures ADD COLUMN IF NOT EXISTS time_elapsed TEXT")
+            else:
+                query("ALTER TABLE fixtures ADD COLUMN home_scorers TEXT")
+                query("ALTER TABLE fixtures ADD COLUMN away_scorers TEXT")
+                query("ALTER TABLE fixtures ADD COLUMN time_elapsed TEXT")
+            db.commit()
+        except Exception:
+            db.rollback()
     except Exception as e:
         logging.error(f"init_db failed: {e}")
         raise
@@ -1297,24 +1311,45 @@ def sync_fixtures_from_api():
         venue, city = STADIUM_MAP.get(stadium_id, ('', ''))
 
         finished = match.get('finished', 'FALSE')
+        time_elapsed = match.get('time_elapsed', '')
+
         if finished == 'TRUE' and home_name != 'TBD':
             hs = int(match.get('home_score', 0))
             a_s = int(match.get('away_score', 0))
             status = 'completed'
+        elif time_elapsed and time_elapsed != 'notstarted' and home_name != 'TBD':
+            hs = int(match.get('home_score', 0))
+            a_s = int(match.get('away_score', 0))
+            status = 'live'
         else:
             hs, a_s, status = None, None, 'upcoming'
+
+        home_scorers = match.get('home_scorers')
+        if home_scorers and home_scorers != 'null':
+            home_scorers = home_scorers.strip('"{}').replace('","', ', ')
+        else:
+            home_scorers = None
+
+        away_scorers = match.get('away_scorers')
+        if away_scorers and away_scorers != 'null':
+            away_scorers = away_scorers.strip('"{}').replace('","', ', ')
+        else:
+            away_scorers = None
 
         query(
             'UPDATE fixtures SET round = %s, group_name = %s, home_team = %s, away_team = %s, '
             'date = %s, match_time = %s, venue = %s, city = %s, '
-            'home_score = %s, away_score = %s, status = %s WHERE match_number = %s'
+            'home_score = %s, away_score = %s, status = %s, '
+            'home_scorers = %s, away_scorers = %s, time_elapsed = %s WHERE match_number = %s'
             if is_pg() else
             'UPDATE fixtures SET round = ?, group_name = ?, home_team = ?, away_team = ?, '
             'date = ?, match_time = ?, venue = ?, city = ?, '
-            'home_score = ?, away_score = ?, status = ? WHERE match_number = ?',
+            'home_score = ?, away_score = ?, status = ?, '
+            'home_scorers = ?, away_scorers = ?, time_elapsed = ? WHERE match_number = ?',
             (round_name, group_name, home_name, away_name,
              date_str, time_str, venue, city,
-             hs, a_s, status, match_num)
+             hs, a_s, status,
+             home_scorers, away_scorers, time_elapsed, match_num)
         )
         updated.add(match_num)
 

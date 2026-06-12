@@ -18,16 +18,28 @@
   <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:0.5rem;">
     {% for m in matches %}
     {% set ld, lt = lisbon_time(m.date, m.match_time, m.city) %}
-    <div style="background:#0f1119;border:1px solid #1a1e2a;border-radius:6px;padding:0.6rem 0.75rem;">
+    <div style="background:#0f1119;border:1px solid #1a1e2a;border-radius:6px;padding:0.6rem 0.75rem;{% if m.status == 'live' %}border-color:#059669;{% endif %}">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;font-size:0.85rem;">
         <span style="font-weight:500;{% if m.home_team == 'TBD' %}color:#535768;font-style:italic;{% endif %}">
           {% if m.home_team == 'TBD' %}TBD{% else %}{{ team_flag(m.home_team) }} {{ m.home_team }}{% endif %}
         </span>
         <span style="min-width:2.5rem;text-align:center;font-weight:700;">
           {% if m.home_score is not none and m.away_score is not none %}
-            <span style="display:inline-block;padding:0.1rem 0.4rem;border-radius:4px;background:#1e293b;color:#fbbf24;font-size:0.8rem;">
+            <span style="display:inline-block;padding:0.1rem 0.4rem;border-radius:4px;font-size:0.8rem;
+              {%- if m.status == 'live' %}background:#059669;color:#fff;
+              {%- else %}background:#1e293b;color:#fbbf24;{% endif %}">
+              {% if m.status == 'live' %}<span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:#fbbf24;margin-right:3px;animation:pulse 1.5s infinite;"></span>{% endif %}
               {{ m.home_score }} &ndash; {{ m.away_score }}
             </span>
+            {% if m.status == 'live' and m.time_elapsed and m.time_elapsed != 'finished' %}
+              <div style="font-size:0.55rem;color:#22c55e;font-weight:600;margin-top:1px;">{{ m.time_elapsed }}</div>
+            {% endif %}
+            {% if (m.status == 'completed' or m.status == 'live') and (m.home_scorers or m.away_scorers) %}
+              <div style="font-size:0.5rem;color:#7f8494;line-height:1.3;margin-top:1px;">
+                {% if m.home_scorers %}<div>{{ m.home_scorers }}</div>{% endif %}
+                {% if m.away_scorers %}<div>{{ m.away_scorers }}</div>{% endif %}
+              </div>
+            {% endif %}
           {% else %}
             <span style="color:#535768;font-size:0.65rem;">vs</span>
           {% endif %}
@@ -43,4 +55,10 @@
 </div>
 {% endif %}
 {% endfor %}
+<style>
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+</style>
 {% endblock %}
