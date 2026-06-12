@@ -264,7 +264,8 @@ def init_db():
                 query('TRUNCATE TABLE fixtures')
             else:
                 query('DELETE FROM fixtures')
-            seed_fixtures()
+            if not sync_fixtures_from_api():
+                seed_fixtures()
             db.commit()
         except Exception:
             db.rollback()
